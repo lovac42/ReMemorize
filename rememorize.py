@@ -46,9 +46,9 @@ class ReMemorize:
         return [i for i in mw.col.db.list(
             "select id from cards where nid=?", nid)]
 
-    def forgetCards(self, card):
+    def forgetCards(self):
         if mw.state != 'review': return
-        cids=self.getSiblings(card.nid)
+        cids=self.getSiblings(mw.reviewer.card.nid)
         mw.col.sched.forgetCards(cids)
         mw.reset()
 
@@ -77,7 +77,7 @@ class ReMemorize:
 
         c=mw.reviewer.card
         if days == 0:
-            self.forgetCards(c)
+            self.forgetCards()
         elif days > 0:
             self.updateStats(c)
             self.reschedCards(c, days)
