@@ -2,7 +2,7 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.0.1
+# Version: 0.0.2
 
 
 #config
@@ -46,16 +46,26 @@ class ReMemorize:
         return [i for i in mw.col.db.list(
             "select id from cards where nid=?", nid)]
 
-    def forgetCards(self):
+    def forgetCards(self, card):
         if mw.state != 'review': return
-        cids=self.getSiblings(mw.reviewer.card.nid)
+        cids=self.getSiblings(card.nid)
         mw.col.sched.forgetCards(cids)
         mw.reset()
 
-    def reschedCards(self, days):
-        cids=self.getSiblings(mw.reviewer.card.nid)
+    def reschedCards(self, card, days):
+        mw.col.markReview(card)
+        cids=self.getSiblings(card.nid)
         mw.col.sched.reschedCards(cids, days, days+RANDOM_DAYS_MAX)
+        mw.reviewer._answeredIds.append(card.id)
+        mw.autosave()
         mw.reset()
+
+    def updateStats(self, card):
+        if card.queue == 0:
+            mw.col.sched._updateStats(card, 'new')
+        else:
+            mw.col.sched._updateStats(card, 'rev')
+
 
     def ask(self):
         if mw.state != 'review': return
@@ -65,21 +75,22 @@ class ReMemorize:
             days = int(days)
         except ValueError: return
 
+        c=mw.reviewer.card
         if days == 0:
-            self.forgetCards()
+            self.forgetCards(c)
         elif days > 0:
-            self.reschedCards(days)
+            self.updateStats(c)
+            self.reschedCards(c, days)
 
 
 remem=ReMemorize()
 
 
 #Reset sibling cards on forget
-def answerCard(self, card, ease):
-    if ease == 1:
-        cids=[i for i in mw.col.db.list(
-            "select id from cards where nid=? and type=2 and queue=2 and id!=? and ivl > ?",
-            card.nid, card.id, SIBLING_BOUNDARY)]
-        self.reschedCards(cids, 5, 9)
+def rescheduleLapse(self, card):
+    cids=[i for i in mw.col.db.list(
+        "select id from cards where nid=? and type=2 and queue=2 and id!=? and ivl > ?",
+        card.nid, card.id, SIBLING_BOUNDARY)]
+    self.reschedCards(cids, 5, 9)
 
-Scheduler.answerCard = wrap(Scheduler.answerCard, answerCard, 'after')
+Scheduler._rescheduleLapse = wrap(Scheduler._rescheduleLapse, rescheduleLapse, 'before')
