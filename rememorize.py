@@ -2,7 +2,7 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.0.2
+# Version: 0.0.3
 
 
 #config
@@ -87,10 +87,12 @@ remem=ReMemorize()
 
 
 #Reset sibling cards on forget
-def rescheduleLapse(self, card):
-    cids=[i for i in mw.col.db.list(
-        "select id from cards where nid=? and type=2 and queue=2 and id!=? and ivl > ?",
-        card.nid, card.id, SIBLING_BOUNDARY)]
-    self.reschedCards(cids, 5, 9)
+def answerCard(self, card, ease):
+    if ease == 1:
+        cids=[i for i in mw.col.db.list(
+            "select id from cards where nid=? and type=2 and queue=2 and id!=? and ivl > ?",
+            card.nid, card.id, SIBLING_BOUNDARY)]
+        if len(cids) > 0:
+            self.reschedCards(cids, 5, 9)
 
-Scheduler._rescheduleLapse = wrap(Scheduler._rescheduleLapse, rescheduleLapse, 'before')
+Scheduler.answerCard = wrap(Scheduler.answerCard, answerCard, 'after')
