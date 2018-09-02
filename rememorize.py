@@ -60,7 +60,7 @@ class ReMemorize:
         mw.autosave()
         mw.reset()
 
-    def updateStats(self, card):
+    def updateStats(self, card): #subtract count from new/rev queue
         if card.queue == 0:
             mw.col.sched._updateStats(card, 'new')
         else:
