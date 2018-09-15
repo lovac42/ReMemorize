@@ -2,7 +2,7 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.0.3
+# Version: 0.0.4
 
 
 #config
@@ -18,6 +18,25 @@ from aqt.qt import *
 from anki.hooks import wrap
 from anki.sched import Scheduler
 from aqt.utils import showWarning, showText, getText
+from anki.utils import intTime
+import random
+
+
+#from: anki.sched.Scheduler, removed resetting ease factor
+def customReschedCards(ids, imin, imax):
+    d = []
+    t = mw.col.sched.today
+    mod = intTime()
+    for id in ids:
+        r = random.randint(imin, imax)
+        d.append(dict(id=id, due=r+t, ivl=max(1, r), mod=mod,
+                      usn=mw.col.usn()))
+    mw.col.sched.remFromDyn(ids)
+    mw.col.db.executemany("""
+update cards set type=2,queue=2,ivl=:ivl,due=:due,odue=0,
+usn=:usn,mod=:mod where id=:id""", d)
+    mw.col.log(ids)
+
 
 
 class ReMemorize:
@@ -55,7 +74,7 @@ class ReMemorize:
     def reschedCards(self, card, days):
         mw.col.markReview(card)
         cids=self.getSiblings(card.nid)
-        mw.col.sched.reschedCards(cids, days, days+RANDOM_DAYS_MAX)
+        customReschedCards(cids, days, days+RANDOM_DAYS_MAX)
         mw.reviewer._answeredIds.append(card.id)
         mw.autosave()
         mw.reset()
@@ -93,6 +112,6 @@ def answerCard(self, card, ease):
             "select id from cards where nid=? and type=2 and queue=2 and id!=? and ivl > ?",
             card.nid, card.id, SIBLING_BOUNDARY)]
         if len(cids) > 0:
-            self.reschedCards(cids, 5, 9)
+            customReschedCards(cids, 5, 9)
 
 Scheduler.answerCard = wrap(Scheduler.answerCard, answerCard, 'after')
