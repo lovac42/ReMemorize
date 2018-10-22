@@ -2,22 +2,28 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.0.5
+# Version: 0.0.7
 
 
 # CONFIGS ##################################
 
-FUZZ_DAYS = True
-
-SIBLING_RESCHEDULE = True
-SIBLING_BOUNDARY = 90
-SIBLING_DAYS_MIN = 5    #Set equal days for no fuzz
-SIBLING_DAYS_MAX = 9    #Set equal days for no fuzz
-
 HOTKEY = 'Ctrl+M' #SM hotkey?
+
 EF_HOTKEY = 'Ctrl+Shift+M'
 
 REVLOG_RESCHEDULED = True #Changes shows up in revlog
+
+FUZZ_DAYS = True
+
+FORGET_SIBLINGS = False
+
+RESCHEDULE_SIBLINGS = False
+
+#When a card is graded as incorrect.
+AUTO_RESCHEDULE_SIBLINGS = True
+SIBLING_BOUNDARY = 90
+SIBLING_DAYS_MIN = 5    #Set equal days for no fuzz
+SIBLING_DAYS_MAX = 9    #Set equal days for no fuzz
 
 # END CONFIGS ##################################
 
@@ -94,24 +100,34 @@ class ReMemorize:
         shortcut = QShortcut(QKeySequence(EF_HOTKEY), mw)
         shortcut.activated.connect(self.changeEF)
 
-    def getSiblings(self, nid):
+    def getSiblings(self, nid): #includes all cards in note
         return [i for i in mw.col.db.list(
             "select id from cards where nid=?", nid)]
 
     def forgetCards(self):
         if mw.state != 'review': return
-        cids=self.getSiblings(mw.reviewer.card.nid)
+        card=mw.reviewer.card
+        if FORGET_SIBLINGS:
+            cids=self.getSiblings(card.nid)
+        else:
+            cids=[card.id]
         mw.col.sched.forgetCards(cids)
         mw.reset()
 
     def reschedCards(self, card, days):
         mw.col.markReview(card)
-        cids=self.getSiblings(card.nid)
+
+        if RESCHEDULE_SIBLINGS:
+            cids=self.getSiblings(card.nid)
+        else:
+            cids=[card.id]
+
         if FUZZ_DAYS:
             min, max = mw.col.sched._fuzzIvlRange(days)
             customReschedCards(cids, min, max)
         else:
             customReschedCards(cids, days, days)
+
         mw.reviewer._answeredIds.append(card.id)
         mw.autosave()
         mw.reset()
@@ -153,7 +169,7 @@ remem=ReMemorize()
 
 #Reset sibling cards on forget
 def answerCard(self, card, ease):
-    if ease == 1 and SIBLING_RESCHEDULE:
+    if ease == 1 and AUTO_RESCHEDULE_SIBLINGS:
         cids=[i for i in mw.col.db.list(
             "select id from cards where nid=? and type=2 and queue=2 and id!=? and ivl > ?",
             card.nid, card.id, SIBLING_BOUNDARY)]
