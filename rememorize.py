@@ -2,7 +2,7 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.0.7
+# Version: 0.0.8
 
 
 # CONFIGS ##################################
@@ -42,17 +42,17 @@ def customReschedCards(ids, imin, imax):
     d = []
     t = mw.col.sched.today
     mod = intTime()
-    logtime = int(time.time()*1000)
     for id in ids:
         r = random.randint(imin, imax)
         ivl = max(1, r)
         d.append(dict(id=id, due=r+t, ivl=ivl, mod=mod, usn=mw.col.usn()))
         card=mw.col.getCard(id)
+        print id
         try:
-            log(card,ivl,logtime)
+            log(card,ivl)
         except:
             time.sleep(0.01) # duplicate pk; retry in 10ms
-            log(card,ivl,logtime)
+            log(card,ivl)
 
     mw.col.sched.remFromDyn(ids)
     mw.col.db.executemany("""
@@ -61,13 +61,16 @@ usn=:usn,mod=:mod where id=:id""", d)
     mw.col.log(ids)
 
 
-#custom log type: 4 = rescheduled
+
 #lastIvl = card.ivl
-def log(card, ivl, logtime):
+#ease=0, timeTaken=0
+#custom log type: 4 = rescheduled
+def log(card, ivl):
     if not REVLOG_RESCHEDULED: return
+    logid = int(time.time()*1000)
     mw.col.db.execute(
         "insert into revlog values (?,?,?,0,?,?,?,0,4)",
-        logtime, card.id, mw.col.usn(),
+        logid, card.id, mw.col.usn(),
         ivl, card.ivl, card.factor )
 
 
