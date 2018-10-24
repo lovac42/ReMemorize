@@ -2,7 +2,7 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.0.8
+# Version: 0.1.1
 
 
 # CONFIGS ##################################
@@ -15,8 +15,8 @@ REVLOG_RESCHEDULED = True #Changes shows up in revlog
 
 FUZZ_DAYS = True
 
+#BUG: Undo review brings up siblings as well.
 FORGET_SIBLINGS = False
-
 RESCHEDULE_SIBLINGS = False
 
 #When a card is graded as incorrect.
@@ -47,7 +47,7 @@ def customReschedCards(ids, imin, imax):
         ivl = max(1, r)
         d.append(dict(id=id, due=r+t, ivl=ivl, mod=mod, usn=mw.col.usn()))
         card=mw.col.getCard(id)
-        print id
+        mw.col.markReview(card) #undo
         try:
             log(card,ivl)
         except:
@@ -67,10 +67,10 @@ usn=:usn,mod=:mod where id=:id""", d)
 #custom log type: 4 = rescheduled
 def log(card, ivl):
     if not REVLOG_RESCHEDULED: return
-    logid = int(time.time()*1000)
+    logId = intTime(1000)
     mw.col.db.execute(
         "insert into revlog values (?,?,?,0,?,?,?,0,4)",
-        logid, card.id, mw.col.usn(),
+        logId, card.id, mw.col.usn(),
         ivl, card.ivl, card.factor )
 
 
@@ -110,15 +110,27 @@ class ReMemorize:
     def forgetCards(self):
         if mw.state != 'review': return
         card=mw.reviewer.card
+
         if FORGET_SIBLINGS:
             cids=self.getSiblings(card.nid)
         else:
             cids=[card.id]
+
+        for id in cids:
+            card=mw.col.getCard(id)
+            mw.col.markReview(card) #undo
+            try:
+                log(card,0)
+            except:
+                time.sleep(0.01) # duplicate pk; retry in 10ms
+                log(card,0)
+
         mw.col.sched.forgetCards(cids)
         mw.reset()
 
+
     def reschedCards(self, card, days):
-        mw.col.markReview(card)
+        #undo moved to customReschedCards()
 
         if RESCHEDULE_SIBLINGS:
             cids=self.getSiblings(card.nid)
@@ -134,6 +146,7 @@ class ReMemorize:
         mw.reviewer._answeredIds.append(card.id)
         mw.autosave()
         mw.reset()
+
 
     def updateStats(self, card): #subtract count from new/rev queue
         if card.queue == 0:
