@@ -2,7 +2,7 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.1.1
+# Version: 0.1.2
 
 
 # CONFIGS ##################################
@@ -89,19 +89,16 @@ class ReMemorize:
         mnew.triggered.connect(self.forgetCards)
         menu.addAction(mnew)
 
-        mdays = QAction("re-memorize: Reschedule "+HOTKEY, mw)
+        mdays = QAction("re-memorize: Reschedule ", mw)
+        mdays.setShortcut(QKeySequence(HOTKEY))
         mdays.triggered.connect(self.ask)
         menu.addAction(mdays)
 
         cef = QAction("re-memorize: Change Card Factor "+EF_HOTKEY, mw)
+        cef.setShortcut(QKeySequence(EF_HOTKEY))
         cef.triggered.connect(self.changeEF)
         menu.addAction(cef)
 
-        #Change due date
-        shortcut = QShortcut(QKeySequence(HOTKEY), mw)
-        shortcut.activated.connect(self.ask)
-        shortcut = QShortcut(QKeySequence(EF_HOTKEY), mw)
-        shortcut.activated.connect(self.changeEF)
 
     def getSiblings(self, nid): #includes all cards in note
         return [i for i in mw.col.db.list(
