@@ -2,7 +2,7 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.1.2
+# Version: 0.1.4
 
 
 # CONFIGS ##################################
@@ -32,22 +32,22 @@ from aqt import mw
 from aqt.qt import *
 from anki.hooks import wrap
 from anki.sched import Scheduler
-from aqt.utils import showWarning, showText, getText
+from aqt.utils import showWarning, showText, getText, tooltip
 from anki.utils import intTime, ids2str
 import random, time
 
 
-#from: anki.sched.Scheduler, removed resetting ease factor
-def customReschedCards(ids, imin, imax):
+#from: anki.sched.Scheduler, removed resetting ease factor, added logs
+def customReschedCards(ids, imin, imax, imod=True):
     d = []
     t = mw.col.sched.today
     mod = intTime()
     for id in ids:
-        r = random.randint(imin, imax)
-        ivl = max(1, r)
-        d.append(dict(id=id, due=r+t, ivl=ivl, mod=mod, usn=mw.col.usn()))
         card=mw.col.getCard(id)
         mw.col.markReview(card) #undo
+        r = random.randint(imin, imax)
+        ivl = max(1, r) if imod else card.ivl
+        d.append(dict(id=id, due=r+t, ivl=ivl, mod=mod, usn=mw.col.usn()))
         try:
             log(card,ivl)
         except:
@@ -85,19 +85,19 @@ class ReMemorize:
         if not menu:
             menu=mw.form.menubar.addMenu('&Study')
 
-        mnew = QAction("re-memorize: Forget note", mw)
+        mnew = QAction("reMemorize: Forget note", mw)
         mnew.triggered.connect(self.forgetCards)
         menu.addAction(mnew)
 
-        mdays = QAction("re-memorize: Reschedule ", mw)
-        mdays.setShortcut(QKeySequence(HOTKEY))
-        mdays.triggered.connect(self.ask)
-        menu.addAction(mdays)
-
-        cef = QAction("re-memorize: Change Card Factor "+EF_HOTKEY, mw)
+        cef = QAction("reMemorize: Change Card Factor", mw)
         cef.setShortcut(QKeySequence(EF_HOTKEY))
         cef.triggered.connect(self.changeEF)
         menu.addAction(cef)
+
+        mdays = QAction("reMemorize: Reschedule", mw)
+        mdays.setShortcut(QKeySequence(HOTKEY))
+        mdays.triggered.connect(self.ask)
+        menu.addAction(mdays)
 
 
     def getSiblings(self, nid): #includes all cards in note
@@ -124,25 +124,27 @@ class ReMemorize:
 
         mw.col.sched.forgetCards(cids)
         mw.reset()
+        tooltip(_("Card forgotten."), period=1000)
 
 
-    def reschedCards(self, card, days):
+    def reschedCards(self, card, days, imod=True):
         #undo moved to customReschedCards()
 
-        if RESCHEDULE_SIBLINGS:
+        if imod and RESCHEDULE_SIBLINGS:
             cids=self.getSiblings(card.nid)
         else:
             cids=[card.id]
 
-        if FUZZ_DAYS:
+        if imod and FUZZ_DAYS:
             min, max = mw.col.sched._fuzzIvlRange(days)
             customReschedCards(cids, min, max)
         else:
-            customReschedCards(cids, days, days)
+            customReschedCards(cids, days, days, imod)
 
         mw.reviewer._answeredIds.append(card.id)
         mw.autosave()
         mw.reset()
+        tooltip(_("Card rescheduled."), period=1000)
 
 
     def updateStats(self, card): #subtract count from new/rev queue
@@ -150,22 +152,26 @@ class ReMemorize:
             mw.col.sched._updateStats(card, 'new')
         else:
             mw.col.sched._updateStats(card, 'rev')
+        #note: There's no lrnToday key
 
 
     def ask(self):
         if mw.state != 'review': return
-        days, ok = getText("Reschedule Days:", default='7')
+        days, ok = getText("Reschedule Days: (0=forget, neg days=defer)", default='7')
         if not ok: return
         try:
             days = int(days)
         except ValueError: return
 
         c=mw.reviewer.card
-        if days == 0:
+        if days == 0: #mark as new
             self.forgetCards()
-        elif days > 0:
+        elif days > 0: #change due and ivl
             self.updateStats(c)
             self.reschedCards(c, days)
+        elif days < 0: #change due date only
+            self.updateStats(c)
+            self.reschedCards(c, abs(days), False)
 
 
     def changeEF(self):
@@ -175,6 +181,8 @@ class ReMemorize:
         if not ok: return
         c.factor=max(1300,int(fct))
         c.flush()
+        tooltip(_("Card's factor changed."), period=1000)
+
 
 
 remem=ReMemorize()
