@@ -2,10 +2,10 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.1.4
+# Version: 0.1.5
 
 
-# CONFIGS ##################################
+# == User Config =========================================
 
 HOTKEY = 'Ctrl+M' #SM hotkey?
 
@@ -25,20 +25,24 @@ SIBLING_BOUNDARY = 90
 SIBLING_DAYS_MIN = 5    #Set equal days for no fuzz
 SIBLING_DAYS_MAX = 9    #Set equal days for no fuzz
 
-# END CONFIGS ##################################
+# == End Config ==========================================
+##########################################################
 
 
 from aqt import mw
 from aqt.qt import *
 from anki.hooks import wrap
-from anki.sched import Scheduler
-from aqt.utils import showWarning, showText, getText, tooltip
+from aqt.utils import showWarning, showInfo, showText, getText, tooltip
 from anki.utils import intTime, ids2str
 import random, time
+import anki.sched
+
+from anki import version
+ANKI21 = version.startswith("2.1.")
 
 
 #from: anki.sched.Scheduler, removed resetting ease factor, added logs
-def customReschedCards(ids, imin, imax, imod=True):
+def customReschedCards(ids, imin, imax):
     d = []
     t = mw.col.sched.today
     mod = intTime()
@@ -46,7 +50,7 @@ def customReschedCards(ids, imin, imax, imod=True):
         card=mw.col.getCard(id)
         mw.col.markReview(card) #undo
         r = random.randint(imin, imax)
-        ivl = max(1, r) if imod else card.ivl
+        ivl = max(1, r)
         d.append(dict(id=id, due=r+t, ivl=ivl, mod=mod, usn=mw.col.usn()))
         try:
             log(card,ivl)
@@ -61,17 +65,23 @@ usn=:usn,mod=:mod where id=:id""", d)
     mw.col.log(ids)
 
 
-
 #lastIvl = card.ivl
 #ease=0, timeTaken=0
 #custom log type: 4 = rescheduled
 def log(card, ivl):
     if not REVLOG_RESCHEDULED: return
+    delay=getDelay(card)
     logId = intTime(1000)
     mw.col.db.execute(
         "insert into revlog values (?,?,?,0,?,?,?,0,4)",
         logId, card.id, mw.col.usn(),
-        ivl, card.ivl, card.factor )
+        ivl, -delay or card.ivl or 1, card.factor )
+
+def getDelay(card):
+    if card.queue not in (1,3): return 0
+    conf=mw.col.sched._lrnConf(card)
+    left=card.left%1000
+    return mw.col.sched._delayForGrade(conf,left)
 
 
 class ReMemorize:
@@ -127,19 +137,19 @@ class ReMemorize:
         tooltip(_("Card forgotten."), period=1000)
 
 
-    def reschedCards(self, card, days, imod=True):
+    def reschedCards(self, card, days):
         #undo moved to customReschedCards()
 
-        if imod and RESCHEDULE_SIBLINGS:
+        if RESCHEDULE_SIBLINGS:
             cids=self.getSiblings(card.nid)
         else:
             cids=[card.id]
 
-        if imod and FUZZ_DAYS:
+        if FUZZ_DAYS:
             min, max = mw.col.sched._fuzzIvlRange(days)
             customReschedCards(cids, min, max)
         else:
-            customReschedCards(cids, days, days, imod)
+            customReschedCards(cids, days, days)
 
         mw.reviewer._answeredIds.append(card.id)
         mw.autosave()
@@ -152,12 +162,12 @@ class ReMemorize:
             mw.col.sched._updateStats(card, 'new')
         else:
             mw.col.sched._updateStats(card, 'rev')
-        #note: There's no lrnToday key
+        #Note: There's no lrnToday key
 
 
     def ask(self):
         if mw.state != 'review': return
-        days, ok = getText("Reschedule Days: (0=forget, neg days=defer)", default='7')
+        days, ok = getText("Reschedule Days: (0=forget, neg=keep IVL)", default='7')
         if not ok: return
         try:
             days = int(days)
@@ -170,8 +180,7 @@ class ReMemorize:
             self.updateStats(c)
             self.reschedCards(c, days)
         elif days < 0: #change due date only
-            self.updateStats(c)
-            self.reschedCards(c, abs(days), False)
+            self.changeDue(c, abs(days))
 
 
     def changeEF(self):
@@ -180,9 +189,20 @@ class ReMemorize:
         fct, ok = getText("Change Ease Factor:", default=str(c.factor))
         if not ok: return
         c.factor=max(1300,int(fct))
-        c.flush()
-        tooltip(_("Card's factor changed."), period=1000)
+        c.flushSched()
+        tooltip(_("Card factor changed"), period=1000)
 
+
+    def changeDue(self, card, days):
+        "Push the due date forward, don't log or change ivl"
+        if card.odid: 
+            card.did=card.odid
+        card.type=card.queue=2
+        card.left=card.odid=card.odue=0
+        card.due=mw.col.sched.today + days
+        card.flushSched()
+        mw.reset()
+        tooltip(_("Card due date changed"), period=1000)
 
 
 remem=ReMemorize()
@@ -191,10 +211,15 @@ remem=ReMemorize()
 #Reset sibling cards on forget
 def answerCard(self, card, ease):
     if ease == 1 and AUTO_RESCHEDULE_SIBLINGS:
-        cids=[i for i in mw.col.db.list(
-            "select id from cards where nid=? and type=2 and queue=2 and id!=? and ivl > ?",
-            card.nid, card.id, SIBLING_BOUNDARY)]
-        if len(cids) > 0:
-            customReschedCards(cids, SIBLING_DAYS_MIN, SIBLING_DAYS_MAX)
+        conf = mw.col.decks.confForDid(card.did)
+        if conf['dyn'] and conf['resched']:
+            cids=[i for i in mw.col.db.list(
+                "select id from cards where nid=? and type=2 and queue=2 and id!=? and ivl > ?",
+                card.nid, card.id, SIBLING_BOUNDARY)]
+            if len(cids) > 0:
+                customReschedCards(cids, SIBLING_DAYS_MIN, SIBLING_DAYS_MAX)
 
-Scheduler.answerCard = wrap(Scheduler.answerCard, answerCard, 'after')
+anki.sched.Scheduler.answerCard = wrap(anki.sched.Scheduler.answerCard, answerCard, 'after')
+if ANKI21:
+    import anki.schedv2
+    anki.schedv2.Scheduler.answerCard = wrap(anki.schedv2.Scheduler.answerCard, answerCard, 'after')
