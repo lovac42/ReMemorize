@@ -2,7 +2,7 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.1.5
+# Version: 0.1.6
 
 
 # == User Config =========================================
@@ -19,11 +19,13 @@ FUZZ_DAYS = True
 FORGET_SIBLINGS = False
 RESCHEDULE_SIBLINGS = False
 
-#When a card is graded as incorrect.
+#When a card is graded as incorrect, ask user to reschedule siblings
 AUTO_RESCHEDULE_SIBLINGS = True
-SIBLING_BOUNDARY = 90
-SIBLING_DAYS_MIN = 5    #Set equal days for no fuzz
-SIBLING_DAYS_MAX = 9    #Set equal days for no fuzz
+SIBLING_BOUNDARY = 365
+SIBLING_DAYS_MIN = 7     #Set equal days for no fuzz
+SIBLING_DAYS_MAX = 20    #Set equal days for no fuzz
+AUTOMATIC_MODE = False
+
 
 # == End Config ==========================================
 ##########################################################
@@ -211,13 +213,20 @@ remem=ReMemorize()
 #Reset sibling cards on forget
 def answerCard(self, card, ease):
     if ease == 1 and AUTO_RESCHEDULE_SIBLINGS:
-        conf = mw.col.decks.confForDid(card.did)
-        if conf['dyn'] and conf['resched']:
+        if card.ivl>=21: return #avoid Lapse new ivl option
+
+        conf=mw.col.decks.confForDid(card.did)
+        if not card.odid or conf['resched']:
             cids=[i for i in mw.col.db.list(
                 "select id from cards where nid=? and type=2 and queue=2 and id!=? and ivl > ?",
                 card.nid, card.id, SIBLING_BOUNDARY)]
-            if len(cids) > 0:
-                customReschedCards(cids, SIBLING_DAYS_MIN, SIBLING_DAYS_MAX)
+            L=len(cids)
+            if L > 0:
+                if not AUTOMATIC_MODE:
+                    t,ok=getText("You have %d sibling(s) out of bound, reschedule them?"%L, default=str(cids))
+                if AUTOMATIC_MODE or ok:
+                    customReschedCards(cids, SIBLING_DAYS_MIN, SIBLING_DAYS_MAX)
+
 
 anki.sched.Scheduler.answerCard = wrap(anki.sched.Scheduler.answerCard, answerCard, 'after')
 if ANKI21:
