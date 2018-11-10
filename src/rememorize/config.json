@@ -1,0 +1,13 @@
+{
+	"hotkey":     "Ctrl+M",
+	"ef_hotkey":  "Ctrl+Shift+M",
+    "revlog_rescheduled": true,
+	"fuzz_days":  true,
+	"forget_siblings": false,
+	"reschedule_sibling": false,
+	"reschedule_siblings_on_again": true,
+	"sibling_boundary": 365,
+	"sibling_days_min": 7,
+	"sibling_days_max": 20,
+	"automatic_mode": false
+}
