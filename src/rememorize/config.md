@@ -6,6 +6,12 @@ Shortcut for rememorize (Restart required)
 ### ef_hotkey:
 Shortcut for changing ease factor (Restart required)
 
+### fg_hotkey:
+Shortcut for forget note (Restart required)
+
+### default_days_on_ask
+Default days to set when the user presses the hotkey.
+
 ### revlog_rescheduled:
 Turn on Logging?
 

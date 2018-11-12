@@ -1,7 +1,9 @@
 {
 	"hotkey":     "Ctrl+M",
 	"ef_hotkey":  "Ctrl+Shift+M",
-    "revlog_rescheduled": true,
+	"fg_hotkey": null,
+	"default_days_on_ask": 7,
+	"revlog_rescheduled": true,
 	"fuzz_days":  true,
 	"forget_siblings": false,
 	"reschedule_sibling": false,

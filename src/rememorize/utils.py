@@ -2,7 +2,7 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.1
+# Version: 0.2.2
 
 
 from aqt import mw
@@ -14,19 +14,20 @@ from .const import *
 
 #from: anki.sched.Scheduler, removed resetting ease factor, added logs
 def customReschedCards(ids, imin, imax, logging=True):
+    # mw.checkpoint(_("Rescheduled")) #undo state, inc siblings
+
     d = []
     t = mw.col.sched.today
     mod = intTime()
     for id in ids:
         card=mw.col.getCard(id)
-        mw.col.markReview(card) #undo
+        mw.col.markReview(card) #undo, push each sibling onto the undo stack.
 
         r = random.randint(imin, imax)
         ivl = max(1, r)
-        #initialize new cards, just in case.
-        fct=2500 if card.factor==0 else card.factor
-        fct=max(1300,fct)
 
+        #initialize new cards, just in case.
+        fct=2500 if card.factor==0 else max(1300,card.factor)
         d.append(dict(id=id, due=r+t, ivl=ivl, mod=mod, usn=mw.col.usn(), fact=fct))
         if logging:
             try:

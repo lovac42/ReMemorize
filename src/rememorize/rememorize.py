@@ -2,7 +2,7 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.1
+# Version: 0.2.2
 
 
 from aqt import mw
@@ -18,6 +18,13 @@ class ReMemorize:
     def __init__(self):
         addHook('profileLoaded', self.onProfileLoaded)
 
+        #Allows other GUIs to tap into
+        # e.g. runHook("ReMemorize.reschedule", card, 100)
+        addHook('ReMemorize.forget', self.forgetCards)
+        addHook('ReMemorize.reschedule', self.reschedCards)
+        addHook('ReMemorize.changeDue', self.changeDue)
+
+
     def onProfileLoaded(self):
         self.conf=Settings()
         menu=None
@@ -30,18 +37,20 @@ class ReMemorize:
             menu=mw.form.menubar.addMenu('&Study')
 
         mnew = QAction("reMemorize: Forget note", mw)
-        mnew.triggered.connect(self.forgetCards)
+        key=self.conf.get("fg_hotkey",None)
+        if key: mnew.setShortcut(QKeySequence(key))
+        mnew.triggered.connect(self._forgetCards)
         menu.addAction(mnew)
 
         cef = QAction("reMemorize: Change Card Factor", mw)
-        key=self.conf.get("ef_hotkey","Ctrl+Shift+M")
-        cef.setShortcut(QKeySequence(key))
+        key=self.conf.get("ef_hotkey",None)
+        if key: cef.setShortcut(QKeySequence(key))
         cef.triggered.connect(self.changeEF)
         menu.addAction(cef)
 
         mdays = QAction("reMemorize: Reschedule", mw)
-        key=self.conf.get("hotkey","Ctrl+M")
-        mdays.setShortcut(QKeySequence(key))
+        key=self.conf.get("hotkey",None)
+        if key: mdays.setShortcut(QKeySequence(key))
         mdays.triggered.connect(self.ask)
         menu.addAction(mdays)
 
@@ -50,10 +59,13 @@ class ReMemorize:
         return [i for i in mw.col.db.list(
             "select id from cards where nid=?", nid)]
 
-    def forgetCards(self):
+
+    def _forgetCards(self):
         if mw.state != 'review': return
         card=mw.reviewer.card
+        self.forgetCards(card)
 
+    def forgetCards(self, card):
         if self.conf.get("forget_siblings",False):
             cids=self.getSiblings(card.nid)
         else:
@@ -75,7 +87,7 @@ class ReMemorize:
 
 
     def reschedCards(self, card, days):
-        #undo moved to customReschedCards()
+        #undo() moved to customReschedCards()
         log=self.conf.get("revlog_rescheduled",True)
 
         if self.conf.get("reschedule_sibling",False):
@@ -105,7 +117,8 @@ class ReMemorize:
 
     def ask(self):
         if mw.state != 'review': return
-        days, ok = getText("Reschedule Days: (0=forget, neg=keep IVL)", default='7')
+        dft=self.conf.get("default_days_on_ask",7)
+        days, ok = getText("Reschedule Days: (0=forget, neg=keep IVL)", default=str(dft))
         if not ok: return
         try:
             days = int(days)
@@ -113,7 +126,7 @@ class ReMemorize:
 
         c=mw.reviewer.card
         if days == 0: #mark as new
-            self.forgetCards()
+            self.forgetCards(c)
         elif days > 0: #change due and ivl
             self.updateStats(c)
             self.reschedCards(c, days)
@@ -136,7 +149,7 @@ class ReMemorize:
     def changeDue(self, card, days):
         "Push the due date forward, don't log or change ivl"
         mw.col.markReview(card) #undo
-        if card.odid: 
+        if card.odid:
             card.did=card.odid
         card.left=card.odid=card.odue=0
         card.type=card.queue=2
@@ -148,6 +161,6 @@ class ReMemorize:
         card.due=mw.col.sched.today + days
         card.flushSched()
         mw.reset()
-        tooltip(_("Card due date changed"), period=1000)
+        tooltip(_("Card due date changed."), period=1000)
 
 
