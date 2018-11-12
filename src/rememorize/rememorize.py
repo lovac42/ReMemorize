@@ -2,7 +2,7 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.0
+# Version: 0.2.1
 
 
 from aqt import mw
@@ -135,11 +135,16 @@ class ReMemorize:
 
     def changeDue(self, card, days):
         "Push the due date forward, don't log or change ivl"
+        mw.col.markReview(card) #undo
         if card.odid: 
             card.did=card.odid
-        mw.col.markReview(card)
-        card.type=card.queue=2
         card.left=card.odid=card.odue=0
+        card.type=card.queue=2
+
+        #initialize new cards, just in case.
+        if card.factor==0: card.factor=2500
+        if card.ivl==0: card.ivl=1
+
         card.due=mw.col.sched.today + days
         card.flushSched()
         mw.reset()
