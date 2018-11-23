@@ -2,7 +2,7 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.1
+# Version: 0.2.2
 
 
 from aqt import mw
@@ -29,9 +29,10 @@ def answerCard(self, card, ease):
                 card.nid, card.id, remem.conf.get("sibling_boundary",365))]
             L=len(cids)
             if L > 0:
-                if not remem.conf.get("automatic_mode",False):
+                am=ok=remem.conf.get("automatic_mode",False)
+                if not am:
                     t,ok=getText("You have %d sibling(s) out of bound, reschedule them?"%L, default=str(cids))
-                if remem.conf.get("automatic_mode",False) or ok:
+                if am or ok:
                     dMin=remem.conf.get("sibling_days_min",7)
                     dMax=remem.conf.get("sibling_days_max",20)
                     log=remem.conf.get("revlog_rescheduled",False)
