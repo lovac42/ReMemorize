@@ -21,6 +21,9 @@ Fuzz days or use same date?
 ### forget_siblings:
 (On ForgetCard) Make siblings new cards as well?
 
+### bury_siblings:
+
+
 ### reschedule_sibling:
 (On RescheduleCard) Reschedule siblings as well?
 

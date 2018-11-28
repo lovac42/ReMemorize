@@ -2,7 +2,7 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.2
+# Version: 0.2.3
 
 
 from aqt import mw
@@ -22,6 +22,7 @@ class ReMemorize:
         # e.g. runHook("ReMemorize.reschedule", card, 100)
         addHook('ReMemorize.forget', self.forgetCards)
         addHook('ReMemorize.reschedule', self.reschedCards)
+        addHook('ReMemorize.rescheduleAll', self.reschedSelected)
         addHook('ReMemorize.changeDue', self.changeDue)
 
 
@@ -86,6 +87,11 @@ class ReMemorize:
         tooltip(_("Card forgotten."), period=1000)
 
 
+    def reschedSelected(cids, imin, imax, logging=True):
+        "wrapper, access to util function"
+        customReschedCards(cids, imin, imax, logging)
+
+
     def reschedCards(self, card, days):
         #undo() moved to customReschedCards()
         log=self.conf.get("revlog_rescheduled",True)
@@ -125,6 +131,9 @@ class ReMemorize:
         except ValueError: return
 
         c=mw.reviewer.card
+        if days and self.conf.get("bury_siblings",False):
+            mw.col.sched._burySiblings(c)
+
         if days == 0: #mark as new
             self.forgetCards(c)
         elif days > 0: #change due and ivl
@@ -132,6 +141,7 @@ class ReMemorize:
             self.reschedCards(c, days)
         elif days < 0: #change due date only
             self.changeDue(c, abs(days))
+
 
 #TODO parse dates:  datetime.strptime("07/27/2012","%m/%d/%Y")
 
@@ -162,5 +172,4 @@ class ReMemorize:
         card.flushSched()
         mw.reset()
         tooltip(_("Card due date changed."), period=1000)
-
 
