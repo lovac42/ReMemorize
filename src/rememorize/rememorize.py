@@ -2,7 +2,7 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.3
+# Version: 0.2.4
 
 
 from aqt import mw
@@ -11,12 +11,15 @@ from anki.hooks import addHook
 from aqt.utils import getText
 from .utils import *
 from .const import *
-from .settings import *
+from .config import *
+
+ADDON_NAME='rememorize'
 
 
 class ReMemorize:
     def __init__(self):
-        addHook('profileLoaded', self.onProfileLoaded)
+        self.conf=Config(ADDON_NAME)
+        addHook(ADDON_NAME+".configLoaded", self.onConfigLoaded)
 
         #Allows other GUIs to tap into
         # e.g. runHook("ReMemorize.reschedule", card, 100)
@@ -26,8 +29,7 @@ class ReMemorize:
         addHook('ReMemorize.changeDue', self.changeDue)
 
 
-    def onProfileLoaded(self):
-        self.conf=Settings()
+    def onConfigLoaded(self):
         menu=None
         for a in mw.form.menubar.actions():
             if '&Study' == a.text():
@@ -87,7 +89,7 @@ class ReMemorize:
         tooltip(_("Card forgotten."), period=1000)
 
 
-    def reschedSelected(cids, imin, imax, logging=True):
+    def reschedSelected(self, cids, imin, imax, logging=True):
         "wrapper, access to util function"
         customReschedCards(cids, imin, imax, logging)
 
