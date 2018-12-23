@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright: (C) 2018 Lovac42
+# Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 # Version: 0.2.6
@@ -166,7 +166,7 @@ class ReMemorize:
         #initialize new/new-lrn cards
         if card.type in (0,1):
             conf=mw.col.sched._lrnConf(card)
-            mw.col.sched._rescheduleNew(card,conf,False)
+            mw.col.sched._rescheduleNew(card,conf,False) #compatible w/ addon:noFuzzWhatsoever
 
         if card.odid:
             card.did=card.odid
