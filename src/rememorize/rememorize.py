@@ -2,7 +2,7 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.4
+# Version: 0.2.5
 
 
 from aqt import mw
@@ -91,8 +91,9 @@ class ReMemorize:
 
     def reschedSelected(self, cids, imin, imax, logging=True):
         "wrapper, access to util function"
+        mw.progress.start()
         customReschedCards(cids, imin, imax, logging)
-
+        mw.progress.finish()
 
     def reschedCards(self, card, days):
         #undo() moved to customReschedCards()

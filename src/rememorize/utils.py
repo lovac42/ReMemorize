@@ -2,7 +2,7 @@
 # Copyright: (C) 2018 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.2
+# Version: 0.2.3
 
 
 from aqt import mw
@@ -12,16 +12,21 @@ import random, time
 from .const import *
 
 
-#from: anki.sched.Scheduler, removed resetting ease factor, added logs
+#From: anki.sched.Scheduler
+#Mods: removed resetting ease factor, added logs
 def customReschedCards(ids, imin, imax, logging=True):
-    # mw.checkpoint(_("Rescheduled")) #undo state, inc siblings
+    markForUndo=True
+    if mw.state!='review':
+        markForUndo=False
+        mw.checkpoint(_("Rescheduled")) #undo state, inc siblings
 
     d = []
     t = mw.col.sched.today
     mod = intTime()
     for id in ids:
         card=mw.col.getCard(id)
-        mw.col.markReview(card) #undo, push each sibling onto the undo stack.
+        if markForUndo: #see bug/feature comment in readme.
+            mw.col.markReview(card)
 
         r = random.randint(imin, imax)
         ivl = max(1, r)
