@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-# Copyright: (C) 2018 Lovac42
+# Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.4
+# Version: 0.2.6
 
 
 from aqt import mw
@@ -91,8 +91,9 @@ class ReMemorize:
 
     def reschedSelected(self, cids, imin, imax, logging=True):
         "wrapper, access to util function"
+        mw.progress.start()
         customReschedCards(cids, imin, imax, logging)
-
+        mw.progress.finish()
 
     def reschedCards(self, card, days):
         #undo() moved to customReschedCards()
@@ -159,17 +160,18 @@ class ReMemorize:
 
 
     def changeDue(self, card, days):
-        "Push the due date forward, don't log or change ivl"
+        "Push the due date forward, don't log or change ivl except for new cards"
         mw.col.markReview(card) #undo
+
+        #initialize new/new-lrn cards
+        if card.type in (0,1):
+            conf=mw.col.sched._lrnConf(card)
+            mw.col.sched._rescheduleNew(card,conf,False) #compatible w/ addon:noFuzzWhatsoever
+
         if card.odid:
             card.did=card.odid
         card.left=card.odid=card.odue=0
         card.type=card.queue=2
-
-        #initialize new cards, just in case.
-        if card.factor==0: card.factor=2500
-        if card.ivl==0: card.ivl=1
-
         card.due=mw.col.sched.today + days
         card.flushSched()
         mw.reset()
