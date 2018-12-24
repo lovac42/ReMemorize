@@ -2,7 +2,7 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.7
+# Version: 0.2.8
 
 
 from aqt import mw
@@ -85,14 +85,13 @@ class ReMemorize:
                     log(card,0)
 
         mw.col.sched.forgetCards(cids)
-        mw.reset()
-        tooltip(_("Card forgotten."), period=1000)
 
 
     def reschedSelected(self, cids, imin, imax, logging=True):
         "wrapper, access to util function"
         mw.progress.start()
         customReschedCards(cids, imin, imax, logging)
+        mw.autosave()
         mw.progress.finish()
 
     def reschedCards(self, card, days):
@@ -110,10 +109,8 @@ class ReMemorize:
         else:
             customReschedCards(cids, days, days, log)
 
-        mw.reviewer._answeredIds.append(card.id)
-        mw.autosave()
-        mw.reset()
-        tooltip(_("Card rescheduled."), period=1000)
+        if mw.state=='review':
+            mw.reviewer._answeredIds.append(card.id)
 
 
     def updateStats(self, card): #subtract count from new/rev queue
@@ -139,12 +136,20 @@ class ReMemorize:
 
         if days == 0: #mark as new
             self.forgetCards(c)
+            tipTxt="Card forgotten."
+
         elif days > 0: #change due and ivl
             self.updateStats(c)
             self.reschedCards(c, days)
+            tipTxt="Card rescheduled."
+
         elif days < 0: #change due date only
             self.changeDue(c, abs(days))
+            tipTxt="Card due date changed."
 
+        tooltip(_(tipTxt), period=1000)
+        mw.autosave()
+        mw.reset()
 
 #TODO parse dates:  datetime.strptime("07/27/2012","%m/%d/%Y")
 
@@ -175,6 +180,4 @@ class ReMemorize:
         card.type=card.queue=2
         card.due=mw.col.sched.today + days
         card.flushSched()
-        mw.reset()
-        tooltip(_("Card due date changed."), period=1000)
 

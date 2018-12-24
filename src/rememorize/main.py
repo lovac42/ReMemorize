@@ -2,7 +2,7 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.3
+# Version: 0.2.4
 
 
 import aqt
@@ -83,7 +83,10 @@ def reposition(self, _old):
         remem.changeDue(card,start)
         start+=step
     mw.progress.finish()
-    self.onSearch(reset=False)
+    if ANKI21:
+        self.search()
+    else:
+        self.onSearch(reset=False)
     self.model.endReset()
 
 
