@@ -22,7 +22,7 @@ Fuzz days or use same date?
 (On ForgetCard) Make siblings new cards as well?
 
 ### bury_siblings:
-
+Bury sibling cards due today if the current card has been rescheduled.
 
 ### reschedule_sibling:
 (On RescheduleCard) Reschedule siblings as well?
@@ -38,4 +38,17 @@ fuzz days. Set to the same value to avoid fuzz.
 
 ### automatic_mode:
 Don't ask user, just reschedule all out-of-bound siblings.
+
+### replace_brower_reschedule:
+Replaces the card browser's function for reschedCards with rememorize functions.  
+Use "Reschedule..." to change the due/ivl of the card.  
+
+### replace_brower_reposition:
+Replaces the card browser's function for reposition with rememorize functions.  
+Use "Reposition..." to change the due only. (Same as using negative numbers during review.)  
+For new cards, Ivl will be set to graduating interval set in deck options, unless "skip_new_card_types_on_reposition" is set to true.
+
+### skip_new_card_types_on_reposition:
+If enabled, on new cards, it will invoke the old browser reposition method to change the card's position instead of rescheduling the due date.  
+New cards take priority, you can't mix review and new types.  
 
