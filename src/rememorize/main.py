@@ -2,7 +2,7 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.4
+# Version: 0.2.5
 
 
 import aqt
@@ -51,6 +51,16 @@ def reschedCards(self, ids, imin, imax, _old):
     runHook('ReMemorize.rescheduleAll',ids,imin,imax,log)
 
 
+# Replace scheduler.forgetCards called by browser
+def forgetCards(self, ids, _old):
+    browConf=remem.conf.get("browser",{})
+    if not browConf.get("replace_brower_reschedule",False):
+        return _old(self, ids)
+    mw.requireReset()
+    log=remem.conf.get("revlog_rescheduled",True)
+    runHook('ReMemorize.forgetAll',ids,log)
+
+
 # Replaces reposition in browser so it changes the due date instead of changing the position of new cards.
 def reposition(self, _old):
     browConf=remem.conf.get("browser",{})
@@ -93,10 +103,12 @@ def reposition(self, _old):
 
 anki.sched.Scheduler.answerCard = wrap(anki.sched.Scheduler.answerCard, answerCard, 'after')
 anki.sched.Scheduler.reschedCards = wrap(anki.sched.Scheduler.reschedCards, reschedCards, 'around')
+anki.sched.Scheduler.forgetCards = wrap(anki.sched.Scheduler.forgetCards, forgetCards, 'around')
 aqt.browser.Browser.reposition = wrap(aqt.browser.Browser.reposition, reposition, 'around')
 if ANKI21:
     import anki.schedv2
     anki.schedv2.Scheduler.answerCard = wrap(anki.schedv2.Scheduler.answerCard, answerCard, 'after')
     anki.schedv2.Scheduler.reschedCards = wrap(anki.schedv2.Scheduler.reschedCards, reschedCards, 'around')
+    anki.schedv2.Scheduler.forgetCards = wrap(anki.schedv2.Scheduler.forgetCards, forgetCards, 'around')
     aqt.browser.Browser._reposition = wrap(aqt.browser.Browser._reposition, reposition, 'around')
 

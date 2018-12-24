@@ -43,6 +43,7 @@ Addon writers can tap into ReMemorize by using runHooks.
 runHook("ReMemorize.forget", card)              #make new
 runHook("ReMemorize.reschedule", card, 100)     #reschedule 100 days (due+ivl)
 runHook("ReMemorize.changeDue", card, 100)      #reschedule 100 days (due)
+runHook("ReMemorize.forgetAll", cids)           #make new
 runHook("ReMemorize.rescheduleAll", cids, 1, 7) #reschedule rand 1-7 (due+ivl)
 ```
 
