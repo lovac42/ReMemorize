@@ -2,10 +2,10 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.5
+# Version: 0.2.6
 
 
-import aqt
+import aqt, random
 from aqt import mw
 from anki.hooks import wrap
 from aqt.utils import getText
@@ -85,14 +85,23 @@ def reposition(self, _old):
     self.model.beginReset()
     self.mw.checkpoint(_("Rescheduled"))
     self.mw.requireReset()
+
     mw.progress.start()
     start=frm.start.value()
     step=frm.step.value()
+    shuffle=frm.randomize.isChecked()
+    shift=frm.shift.isChecked()
     for cid in sel:
         card=mw.col.getCard(cid)
-        remem.changeDue(card,start)
-        start+=step
+        if shuffle:
+            due=random.randint(start,start+step)
+            remem.changeDue(card,due)
+        else:
+            remem.changeDue(card,start)
+
+        if shift: start+=step
     mw.progress.finish()
+
     if ANKI21:
         self.search()
     else:

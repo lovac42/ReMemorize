@@ -46,7 +46,8 @@ Use "Reschedule..." to change the due/ivl of the card.
 ### replace_brower_reposition:
 Replaces the card browser's function for reposition with rememorize functions.  
 Use "Reposition..." to change the due only. (Same as using negative numbers during review.)  
-For new cards, Ivl will be set to graduating interval set in deck options, unless "skip_new_card_types_on_reposition" is set to true.
+For new cards, Ivl will be set to the graduating interval set in deck options, unless "skip_new_card_types_on_reposition" is set to true.  
+New/new-lrn card changes are logged, if revlog_rescheduled is enabled. Since the intervals do not change on review cards, they will not be logged.  
 
 ### skip_new_card_types_on_reposition:
 If enabled, on new cards, it will invoke the old browser reposition method to change the card's position instead of rescheduling the due date.  
