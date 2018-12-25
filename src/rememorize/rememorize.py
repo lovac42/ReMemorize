@@ -28,6 +28,7 @@ class ReMemorize:
         addHook('ReMemorize.reschedule', self.reschedCards) #w/ siblings & conf settings
         addHook('ReMemorize.rescheduleAll', self.reschedSelected) #util wrapper
         addHook('ReMemorize.changeDue', self.changeDue)
+        addHook('ReMemorize.changeDueAll', self.changeDueSelected)
 
 
     def onConfigLoaded(self):
@@ -94,7 +95,6 @@ class ReMemorize:
         mw.progress.finish()
 
     def reschedCards(self, card, days):
-        #undo() moved to customReschedCards()
         log=self.conf.get("revlog_rescheduled",True)
 
         if self.conf.get("reschedule_sibling",False):
@@ -124,6 +124,8 @@ class ReMemorize:
         if not ok: return
         try:
             days = int(days)
+#TODO parse dates:  datetime.strptime("07/27/2012","%m/%d/%Y")
+#TODO parse fuzz:   7,9
         except ValueError: return
 
         c=mw.reviewer.card
@@ -145,8 +147,6 @@ class ReMemorize:
 
         self._finished(c,tipTxt)
 
-#TODO parse dates:  datetime.strptime("07/27/2012","%m/%d/%Y")
-
 
     def _finished(self, card, msg):
         #for warrior mode last_card preview
@@ -166,26 +166,31 @@ class ReMemorize:
         tooltip(_("Card factor changed"), period=1000)
 
 
+    def changeDueSelected(self, cids, start=1, step=0, shuffle=False, shift=False):
+        mw.checkpoint(_("Rescheduled"))
+        mw.progress.start()
+        for cid in cids:
+            card=mw.col.getCard(cid)
+            if shuffle:
+                due=random.randint(start,start+step)
+                self.changeDue(card,due)
+            else:
+                self.changeDue(card,start)
+            if shift: start+=step
+        mw.autosave()
+        mw.progress.finish()
+
+
     def changeDue(self, card, days):
         "Push the due date forward, don't log or change ivl except for new cards"
         if mw.state=='review':
             mw.col.markReview(card) #undo
 
-        #initialize new/new-lrn cards
         if card.type in (0,1):
-            conf=mw.col.sched._lrnConf(card)
-            #triggers NC initialization, compatible w/ addon:noFuzzWhatsoever
-            mw.col.sched._rescheduleNew(card,conf,False)
-
-            #log reschedules for new cards since ivl was changed.
+            initNewCard(card)
+            #Log new types only since the IVL changed.
             if self.conf.get("revlog_rescheduled",False):
-                card.type=card.queue=1 #sets lastIvl for log delay
-                card.left=1001
-                try: #records fuzzed/LB ivl
-                    log(card,card.ivl) 
-                except:
-                    time.sleep(0.01) # duplicate pk; retry in 10ms
-                    log(card,card.ivl)
+                trylog(card,card.ivl) #records fuzzed/LB ivl
 
         if card.odid:
             card.did=card.odid
@@ -193,4 +198,3 @@ class ReMemorize:
         card.type=card.queue=2
         card.due=mw.col.sched.today + days
         card.flushSched()
-

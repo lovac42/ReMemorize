@@ -83,24 +83,13 @@ def reposition(self, _old):
     if not d.exec_():
         return
     self.model.beginReset()
-    self.mw.checkpoint(_("Rescheduled"))
     self.mw.requireReset()
 
-    mw.progress.start()
     start=frm.start.value()
     step=frm.step.value()
     shuffle=frm.randomize.isChecked()
     shift=frm.shift.isChecked()
-    for cid in sel:
-        card=mw.col.getCard(cid)
-        if shuffle:
-            due=random.randint(start,start+step)
-            remem.changeDue(card,due)
-        else:
-            remem.changeDue(card,start)
-
-        if shift: start+=step
-    mw.progress.finish()
+    remem.changeDueSelected(sel,start,step,shuffle,shift)
 
     if ANKI21:
         self.search()

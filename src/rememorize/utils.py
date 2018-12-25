@@ -2,7 +2,7 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.5
+# Version: 0.2.6
 
 
 from aqt import mw
@@ -27,24 +27,12 @@ def customReschedCards(ids, imin, imax, logging=True):
         card=mw.col.getCard(id)
         if markForUndo: #see bug/feature comment in readme.
             mw.col.markReview(card)
-
-        #initialize new/new-lrn cards
         if card.type in (0,1):
-            conf=mw.col.sched._lrnConf(card)
-            #triggers NC initialization, compatible w/ addon:noFuzzWhatsoever
-            mw.col.sched._rescheduleNew(card,conf,False)
-            card.type=card.queue=1 #sets lastIvl for log delay
-            card.left=1001
-
+            initNewCard(card)
         r = random.randint(imin, imax)
         ivl = max(1, r)
         d.append(dict(id=id, due=r+t, ivl=ivl, mod=mod, usn=mw.col.usn(), fact=card.factor))
-        if logging:
-            try:
-                log(card,ivl)
-            except:
-                time.sleep(0.01) # duplicate pk; retry in 10ms
-                log(card,ivl)
+        if logging: trylog(card,ivl)
 
     mw.col.sched.remFromDyn(ids)
     mw.col.db.executemany("""
@@ -69,11 +57,7 @@ def customForgetCards(cids, logging=True):
             mw.col.markReview(card) #undo
         if logging and card.type and card.queue:
             card.factor=0 #log as n/a
-            try:
-                log(card,0) #shows in log as "0d"
-            except:
-                time.sleep(0.01) # duplicate pk; retry in 10ms
-                log(card,0)
+            trylog(card,0) #shows in log as "0d"
 
     mw.col.db.execute(
         "update cards set type=0,queue=0,left=0,ivl=0,due=0,odue=0,factor=0"
@@ -83,6 +67,15 @@ def customForgetCards(cids, logging=True):
     # takes care of mod + usn
     mw.col.sched.sortCards(cids, start=pmax+1)
     mw.col.log(cids)
+
+
+
+def trylog(card,ivl):
+    try:
+        log(card,ivl)
+    except:
+        time.sleep(0.01) # duplicate pk; retry in 10ms
+        log(card,ivl)
 
 
 #lastIvl = card.ivl
@@ -102,3 +95,12 @@ def getDelay(card):
     conf=mw.col.sched._lrnConf(card)
     left=card.left%1000
     return mw.col.sched._delayForGrade(conf,left)
+
+
+def initNewCard(card):
+    conf=mw.col.sched._lrnConf(card)
+    #triggers NC initialization, compatible w/ addon:noFuzzWhatsoever
+    mw.col.sched._rescheduleNew(card,conf,False)
+    card.type=card.queue=1 #log delay
+    card.left=1001 #sets lastIvl with last learning step
+
