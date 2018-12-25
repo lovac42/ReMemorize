@@ -43,6 +43,7 @@ Addon writers can tap into ReMemorize by using runHooks.
 runHook("ReMemorize.forget", card)              #make new
 runHook("ReMemorize.reschedule", card, 100)     #reschedule 100 days (due+ivl)
 runHook("ReMemorize.changeDue", card, 100)      #reschedule 100 days (due)
+runHook("ReMemorize.forgetAll", cids)           #make new
 runHook("ReMemorize.rescheduleAll", cids, 1, 7) #reschedule rand 1-7 (due+ivl)
 ```
 
@@ -50,6 +51,8 @@ runHook("ReMemorize.rescheduleAll", cids, 1, 7) #reschedule rand 1-7 (due+ivl)
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/studymenu.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/gettext.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/reschedule.png" />  
-<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/reposition.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/stats.png" />  
-
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/dueDate.png" />  
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/stepDates.png" />  
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/randomDates.png" />  
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/randStepDates.png" />  

@@ -2,7 +2,7 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.8
+# Version: 0.2.9
 
 
 from aqt import mw
@@ -23,9 +23,10 @@ class ReMemorize:
 
         #Allows other GUIs to tap into
         # e.g. runHook("ReMemorize.reschedule", card, 100)
-        addHook('ReMemorize.forget', self.forgetCards)
-        addHook('ReMemorize.reschedule', self.reschedCards)
-        addHook('ReMemorize.rescheduleAll', self.reschedSelected)
+        addHook('ReMemorize.forget', self.forgetCards) #w/ siblings & conf settings
+        addHook('ReMemorize.forgetAll', self.forgetSelected) #util wrapper
+        addHook('ReMemorize.reschedule', self.reschedCards) #w/ siblings & conf settings
+        addHook('ReMemorize.rescheduleAll', self.reschedSelected) #util wrapper
         addHook('ReMemorize.changeDue', self.changeDue)
 
 
@@ -63,28 +64,26 @@ class ReMemorize:
             "select id from cards where nid=?", nid)]
 
 
-    def _forgetCards(self):
+    def _forgetCards(self): #triggered from study menu
         if mw.state != 'review': return
         card=mw.reviewer.card
         self.forgetCards(card)
+        self._finished(card,"Card forgotten.")
 
     def forgetCards(self, card):
         if self.conf.get("forget_siblings",False):
             cids=self.getSiblings(card.nid)
         else:
             cids=[card.id]
+        logging=self.conf.get("revlog_rescheduled",False)
+        customForgetCards(cids,logging)
 
-        for id in cids:
-            card=mw.col.getCard(id)
-            mw.col.markReview(card) #undo
-            if self.conf.get("revlog_rescheduled",False):
-                try:
-                    log(card,0)
-                except:
-                    time.sleep(0.01) # duplicate pk; retry in 10ms
-                    log(card,0)
-
-        mw.col.sched.forgetCards(cids)
+    def forgetSelected(self, cids, logging=True):
+        "wrapper, access to util function"
+        mw.progress.start()
+        customForgetCards(cids,logging)
+        mw.autosave()
+        mw.progress.finish()
 
 
     def reschedSelected(self, cids, imin, imax, logging=True):
@@ -108,9 +107,6 @@ class ReMemorize:
             customReschedCards(cids, min, max, log)
         else:
             customReschedCards(cids, days, days, log)
-
-        if mw.state=='review':
-            mw.reviewer._answeredIds.append(card.id)
 
 
     def updateStats(self, card): #subtract count from new/rev queue
@@ -147,11 +143,17 @@ class ReMemorize:
             self.changeDue(c, abs(days))
             tipTxt="Card due date changed."
 
-        tooltip(_(tipTxt), period=1000)
-        mw.autosave()
-        mw.reset()
+        self._finished(c,tipTxt)
 
 #TODO parse dates:  datetime.strptime("07/27/2012","%m/%d/%Y")
+
+
+    def _finished(self, card, msg):
+        #for warrior mode last_card preview
+        mw.reviewer._answeredIds.append(card.id)
+        mw.autosave()
+        mw.reset()
+        tooltip(_(msg), period=1000)
 
 
     def changeEF(self):
@@ -172,7 +174,18 @@ class ReMemorize:
         #initialize new/new-lrn cards
         if card.type in (0,1):
             conf=mw.col.sched._lrnConf(card)
-            mw.col.sched._rescheduleNew(card,conf,False) #compatible w/ addon:noFuzzWhatsoever
+            #triggers NC initialization, compatible w/ addon:noFuzzWhatsoever
+            mw.col.sched._rescheduleNew(card,conf,False)
+
+            #log reschedules for new cards since ivl was changed.
+            if self.conf.get("revlog_rescheduled",False):
+                card.type=card.queue=1 #sets lastIvl for log delay
+                card.left=1001
+                try: #records fuzzed/LB ivl
+                    log(card,card.ivl) 
+                except:
+                    time.sleep(0.01) # duplicate pk; retry in 10ms
+                    log(card,card.ivl)
 
         if card.odid:
             card.did=card.odid
