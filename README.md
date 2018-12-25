@@ -51,6 +51,8 @@ runHook("ReMemorize.rescheduleAll", cids, 1, 7) #reschedule rand 1-7 (due+ivl)
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/studymenu.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/gettext.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/reschedule.png" />  
-<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/reposition.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/stats.png" />  
-
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/dueDate.png" />  
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/stepDates.png" />  
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/randomDates.png" />  
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/randStepDates.png" />  
