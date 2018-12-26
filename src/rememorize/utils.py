@@ -2,7 +2,7 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.6
+# Version: 0.2.7
 
 
 from aqt import mw
@@ -14,7 +14,7 @@ from .const import *
 
 #From: anki.sched.Scheduler
 #Mods: removed resetting ease factor, added logs
-def customReschedCards(ids, imin, imax, logging=True):
+def customReschedCards(ids, imin, imax, logging=True, fuzz=False):
     markForUndo=True
     if mw.state!='review':
         markForUndo=False
@@ -29,7 +29,11 @@ def customReschedCards(ids, imin, imax, logging=True):
             mw.col.markReview(card)
         if card.type in (0,1):
             initNewCard(card)
-        r = random.randint(imin, imax)
+
+        if fuzz: #Invoke Load Balancer or noFuzzWSE
+            r=mw.col.sched._fuzzedIvl(imin)
+        else:
+            r=random.randint(imin,imax)
         ivl = max(1, r)
         d.append(dict(id=id, due=r+t, ivl=ivl, mod=mod, usn=mw.col.usn(), fact=card.factor))
         if logging: trylog(card,ivl)

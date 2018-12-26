@@ -2,7 +2,7 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.9
+# Version: 0.3.0
 
 
 from aqt import mw
@@ -96,17 +96,12 @@ class ReMemorize:
 
     def reschedCards(self, card, days):
         log=self.conf.get("revlog_rescheduled",True)
-
+        fuzz=self.conf.get("fuzz_days",True)
         if self.conf.get("reschedule_sibling",False):
             cids=self.getSiblings(card.nid)
         else:
             cids=[card.id]
-
-        if self.conf.get("fuzz_days",True):
-            min, max = mw.col.sched._fuzzIvlRange(days)
-            customReschedCards(cids, min, max, log)
-        else:
-            customReschedCards(cids, days, days, log)
+        customReschedCards(cids,days,days,log,fuzz)
 
 
     def updateStats(self, card): #subtract count from new/rev queue
