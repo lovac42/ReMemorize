@@ -2,7 +2,7 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.3.0
+# Version: 0.3.1
 
 
 from aqt import mw
@@ -17,6 +17,8 @@ ADDON_NAME='rememorize'
 
 
 class ReMemorize:
+    loaded=False
+
     def __init__(self):
         self.conf=Config(ADDON_NAME)
         addHook(ADDON_NAME+".configLoaded", self.onConfigLoaded)
@@ -32,6 +34,12 @@ class ReMemorize:
 
 
     def onConfigLoaded(self):
+        if not self.loaded:
+            self.setupMenu()
+            self.loaded=True
+
+
+    def setupMenu(self):
         menu=None
         for a in mw.form.menubar.actions():
             if '&Study' == a.text():
@@ -87,10 +95,10 @@ class ReMemorize:
         mw.progress.finish()
 
 
-    def reschedSelected(self, cids, imin, imax, logging=True):
+    def reschedSelected(self, cids, imin, imax, logging=True, lbal=False):
         "wrapper, access to util function"
         mw.progress.start()
-        customReschedCards(cids, imin, imax, logging)
+        customReschedCards(cids,imin,imax,logging,lbal)
         mw.autosave()
         mw.progress.finish()
 
@@ -187,9 +195,12 @@ class ReMemorize:
             if self.conf.get("revlog_rescheduled",False):
                 trylog(card,card.ivl) #records fuzzed/LB ivl
 
+        if self.conf.get("fuzz_dues",False):
+            days=adjInterval(days,days,True)
+        card.due=mw.col.sched.today + days
+
         if card.odid:
             card.did=card.odid
         card.left=card.odid=card.odue=0
         card.type=card.queue=2
-        card.due=mw.col.sched.today + days
         card.flushSched()
