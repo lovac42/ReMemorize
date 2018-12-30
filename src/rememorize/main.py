@@ -2,10 +2,10 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.7
+# Version: 0.2.8
 
 
-import aqt, random
+import sys, aqt, random
 from aqt import mw
 from anki.hooks import wrap
 from aqt.utils import getText
@@ -55,9 +55,15 @@ def reschedCards(self, ids, imin, imax, _old):
 
 # Replace scheduler.forgetCards called by browser
 def forgetCards(self, ids, _old):
+    f=sys._getframe(2) #only wrap for reschedule
+    coname=f.f_code.co_name
+    if coname != 'reschedule':
+        return _old(self, ids)
+
     browConf=remem.conf.get("browser",{})
     if not browConf.get("replace_brower_reschedule",False):
         return _old(self, ids)
+
     mw.requireReset()
     log=remem.conf.get("revlog_rescheduled",True)
     runHook('ReMemorize.forgetAll',ids,log)
