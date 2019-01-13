@@ -55,18 +55,19 @@ def reschedCards(self, ids, imin, imax, _old):
 
 # Replace scheduler.forgetCards called by browser
 def forgetCards(self, ids, _old):
-    f=sys._getframe(2) #only wrap for reschedule
-    coname=f.f_code.co_name
-    if coname != 'reschedule':
-        return _old(self, ids)
-
     browConf=remem.conf.get("browser",{})
     if not browConf.get("replace_brower_reschedule",False):
         return _old(self, ids)
 
-    mw.requireReset()
-    log=remem.conf.get("revlog_rescheduled",True)
-    runHook('ReMemorize.forgetAll',ids,log)
+    for i in range (2,5):
+        f=sys._getframe(i) #only wrap for reschedule
+        if f.f_code.co_name == 'reschedule':
+            mw.requireReset()
+            log=remem.conf.get("revlog_rescheduled",True)
+            runHook('ReMemorize.forgetAll',ids,log)
+            return
+    return _old(self, ids) #called by bury card in reviewer
+
 
 
 # Replaces reposition in browser so it changes the due date instead of changing the position of new cards.

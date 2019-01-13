@@ -2,13 +2,13 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.8
+# Version: 0.2.9
 
 
 from aqt import mw
 from aqt.utils import tooltip
 from anki.utils import intTime, ids2str
-import random, time
+import random, time, datetime
 from .const import *
 
 
@@ -109,10 +109,23 @@ def initNewCard(card):
 
 #Invoke Load Balancer or noFuzzWSE
 def adjInterval(imin,imax,lbal=False):
-    if not lbal:
+    # if not lbal:
         return random.randint(imin,imax) #likely the same num
-    if mw.col.sched.name=="std2": #xquercus LBal, noFuzzWSE
-        return mw.col.sched._fuzzedIvl(imin)
-    else: #jake/xquercus LBal, noFuzzWSE
-        return mw.col.sched._adjRevIvl(None,imin)
+    # if mw.col.sched.name=="std2": #xquercus LBal, noFuzzWSE
+        # return mw.col.sched._fuzzedIvl(imin)
+    # else: #jake/xquercus LBal, noFuzzWSE
+        # return mw.col.sched._adjRevIvl(None,imin)
+
+
+def getDays(date_str):
+    startDate=datetime.datetime.fromtimestamp(mw.col.crt)
+    d=datetime.datetime.today()
+    d-=datetime.timedelta(hours=startDate.hour)
+    today=datetime.datetime(d.year, d.month, d.day)
+    today+=datetime.timedelta(hours=startDate.hour)
+    due=datetime.datetime.strptime(date_str,'%m/%d/%Y')
+    diff=(due-today).days
+    if diff<1: return None
+    return diff
+
 

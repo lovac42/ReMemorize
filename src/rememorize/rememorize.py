@@ -2,7 +2,7 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.3.1
+# Version: 0.3.2
 
 
 from aqt import mw
@@ -126,9 +126,11 @@ class ReMemorize:
         days, ok = getText("Reschedule Days: (0=forget, neg=keep IVL)", default=str(dft))
         if not ok: return
         try:
+            try:
+                days = - getDays(days) #negate for due
+            except ValueError: pass #non date format
+            except TypeError: return #passed date
             days = int(days)
-#TODO parse dates:  datetime.strptime("07/27/2012","%m/%d/%Y")
-#TODO parse fuzz:   7,9
         except ValueError: return
 
         c=mw.reviewer.card
@@ -195,8 +197,8 @@ class ReMemorize:
             if self.conf.get("revlog_rescheduled",False):
                 trylog(card,card.ivl) #records fuzzed/LB ivl
 
-        if self.conf.get("fuzz_dues",False):
-            days=adjInterval(days,days,True)
+        # if self.conf.get("fuzz_dues",False):
+            # days=adjInterval(days,days,True)
         card.due=mw.col.sched.today + days
 
         if card.odid:
@@ -204,3 +206,4 @@ class ReMemorize:
         card.left=card.odid=card.odue=0
         card.type=card.queue=2
         card.flushSched()
+
