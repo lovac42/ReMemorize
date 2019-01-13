@@ -2,13 +2,13 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.3.2
+# Version: 0.3.3
 
 
 from aqt import mw
 from aqt.qt import *
 from anki.hooks import addHook
-from aqt.utils import getText
+from aqt.utils import getText, showInfo
 from .utils import *
 from .const import *
 from .config import *
@@ -120,17 +120,26 @@ class ReMemorize:
         #Note: There's no lrnToday key
 
 
+    def parseDate(self, days):
+        try:
+            days = - getDays(days) #negate for due
+        except ValueError: #non date format
+            return days
+        except TypeError: #passed date
+            showInfo("Already passed due date")
+            return None
+
     def ask(self):
         if mw.state != 'review': return
         dft=self.conf.get("default_days_on_ask",7)
-        days, ok = getText("Reschedule Days: (0=forget, neg=keep IVL)", default=str(dft))
+        days, ok = getText("""
+Reschedule Days: (0=forget, neg=keep IVL) Or 1/1/2020
+""", default=str(dft))
         if not ok: return
+
         try:
-            try:
-                days = - getDays(days) #negate for due
-            except ValueError: pass #non date format
-            except TypeError: return #passed date
-            days = int(days)
+            days = int(parseDate(days))
+        except TypeError: return
         except ValueError: return
 
         c=mw.reviewer.card
