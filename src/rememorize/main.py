@@ -2,7 +2,7 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.8
+# Version: 0.2.9
 
 
 import sys, aqt, random
@@ -50,7 +50,8 @@ def reschedCards(self, ids, imin, imax, _old):
         return _old(self, ids, imin, imax)
     mw.requireReset()
     log=remem.conf.get("revlog_rescheduled",True)
-    runHook('ReMemorize.rescheduleAll',ids,imin,imax,log)
+    fuzz=remem.conf.get("fuzz_days",True) #for load balance
+    runHook('ReMemorize.rescheduleAll',ids,imin,imax,log,fuzz)
 
 
 # Replace scheduler.forgetCards called by browser

@@ -2,7 +2,7 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.3.3
+# Version: 0.3.4
 
 
 from aqt import mw
@@ -122,44 +122,59 @@ class ReMemorize:
 
     def parseDate(self, days):
         try:
-            days = - getDays(days) #negate for due
+            return getDays(days)
         except ValueError: #non date format
             return days
         except TypeError: #passed date
             showInfo("Already passed due date")
             return None
 
-    def ask(self):
+
+    def ask(self, c, checkBury=True):
         if mw.state != 'review': return
         dft=self.conf.get("default_days_on_ask",7)
         days, ok = getText("""
-Reschedule Days: (0=forget, neg=keep IVL) Or 1/1/2020
+Reschedule Days: (0=forget, neg=keep IVL) Or 1/15/2020
 """, default=str(dft))
         if not ok: return
 
+        c=neg=None
+        if days[0]=='p': #previous card, p prefix, changes due date after grading
+            c=mw.reviewer.lastCard()
+            days=days[1:]
+
+        if days[0]=='-': #negative num, change due, keep interval
+            neg=True
+            days=days[1:]
+
         try:
-            days = int(parseDate(days))
+            days = int(self.parseDate(days))
+            if neg: days = - days
         except TypeError: return
         except ValueError: return
 
-        c=mw.reviewer.card
-        if days and self.conf.get("bury_siblings",False):
-            mw.col.sched._burySiblings(c)
+        if not c: #current card
+            c=mw.reviewer.card
+            if days and self.conf.get("bury_siblings",False):
+                mw.col.sched._burySiblings(c)
 
+        tipTxt=self.evalDays(c,days)
+        self._finished(c,tipTxt)
+
+
+    def evalDays(self, c, days):
         if days == 0: #mark as new
             self.forgetCards(c)
-            tipTxt="Card forgotten."
+            return "Card forgotten."
 
         elif days > 0: #change due and ivl
             self.updateStats(c)
             self.reschedCards(c, days)
-            tipTxt="Card rescheduled."
+            return "Card rescheduled."
 
         elif days < 0: #change due date only
             self.changeDue(c, abs(days))
-            tipTxt="Card due date changed."
-
-        self._finished(c,tipTxt)
+            return "Card due date changed."
 
 
     def _finished(self, card, msg):
@@ -206,10 +221,7 @@ Reschedule Days: (0=forget, neg=keep IVL) Or 1/1/2020
             if self.conf.get("revlog_rescheduled",False):
                 trylog(card,card.ivl) #records fuzzed/LB ivl
 
-        # if self.conf.get("fuzz_dues",False):
-            # days=adjInterval(days,days,True)
         card.due=mw.col.sched.today + days
-
         if card.odid:
             card.did=card.odid
         card.left=card.odid=card.odue=0

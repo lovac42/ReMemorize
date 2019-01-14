@@ -5,7 +5,6 @@
     "default_days_on_ask": 7,
     "revlog_rescheduled": true,
     "fuzz_days": true,
-    "fuzz_dues": false,
     "bury_siblings": false,
     "forget_siblings": false,
     "reschedule_sibling": false,

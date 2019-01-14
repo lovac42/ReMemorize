@@ -2,7 +2,7 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.9
+# Version: 0.3.0
 
 
 from aqt import mw
@@ -16,6 +16,7 @@ from .const import *
 #Mods: removed resetting ease factor, added logs
 # if lbal is true, only imin is used.
 def customReschedCards(ids, imin, imax, logging=True, lbal=False):
+    revCard=mw.reviewer.card
     markForUndo=True
     if mw.state!='review':
         markForUndo=False
@@ -28,6 +29,9 @@ def customReschedCards(ids, imin, imax, logging=True, lbal=False):
         card=mw.col.getCard(id)
         if markForUndo: #see bug/feature comment in readme.
             mw.col.markReview(card)
+        else:
+            mw.reviewer.card=card #swap for checks - deFuzz
+
         if card.type in (0,1):
             initNewCard(card)
         r=adjInterval(imin,imax,lbal)
@@ -40,6 +44,7 @@ def customReschedCards(ids, imin, imax, logging=True, lbal=False):
 update cards set type=2,queue=2,left=0,ivl=:ivl,due=:due,odue=0,
 usn=:usn,mod=:mod,factor=:fact where id=:id""", d)
     mw.col.log(ids)
+    mw.reviewer.card=revCard
 
 
 
@@ -109,23 +114,23 @@ def initNewCard(card):
 
 #Invoke Load Balancer or noFuzzWSE
 def adjInterval(imin,imax,lbal=False):
-    # if not lbal:
+    if not lbal:
         return random.randint(imin,imax) #likely the same num
-    # if mw.col.sched.name=="std2": #xquercus LBal, noFuzzWSE
-        # return mw.col.sched._fuzzedIvl(imin)
-    # else: #jake/xquercus LBal, noFuzzWSE
-        # return mw.col.sched._adjRevIvl(None,imin)
+    if mw.col.sched.name=="std2": #xquercus LBal, noFuzzWSE
+        return mw.col.sched._fuzzedIvl(imin)
+    else: #jake/xquercus LBal, noFuzzWSE
+        return mw.col.sched._adjRevIvl(None,imin)
 
 
 def getDays(date_str):
-    startDate=datetime.datetime.fromtimestamp(mw.col.crt)
     d=datetime.datetime.today()
-    d-=datetime.timedelta(hours=startDate.hour)
     today=datetime.datetime(d.year, d.month, d.day)
-    today+=datetime.timedelta(hours=startDate.hour)
-    due=datetime.datetime.strptime(date_str,'%m/%d/%Y')
+    try:
+        due=datetime.datetime.strptime(date_str,'%m/%d/%Y')
+    except ValueError:
+        date_str=date_str+'/'+str(d.year)
+        due=datetime.datetime.strptime(date_str,'%m/%d/%Y')
     diff=(due-today).days
     if diff<1: return None
     return diff
-
 

@@ -19,10 +19,6 @@ Turn on Logging?
 Fuzz interval and due date? true or false  
 Used by positive integer input during review or reschedule option in browser.
 
-### fuzz_dues:
-Fuzz due date, keep interval the same? true or false
-Used by negative integer input during review or reposition optin in browser.
-
 ### forget_siblings:
 (On ForgetCard) Make siblings new cards as well?
 

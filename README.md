@@ -11,6 +11,9 @@ This addon allow users to manually adjust properties of the current card in the 
 Enter zero to reset the card as new.  
 Positive integer to reschedule the card's ivl and due date.  
 Negative integer to reschedule the due date only. Keeping the current IVL.  
+You may enter specific dates such as 1/20 or 1/25/2019, this will change the interval and due date (with fuzz). Similar to negative integers, use negative prefix to change the due date only. -1/20, -1/25, etc...  
+ReMemorize operates on the current card in the reviewer by default. The "p" prefix (lowercase) will operate on the previous card. p7, p-25, p-1/23, etc...  
+
 
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/gettext.png" />  
 
@@ -23,6 +26,7 @@ Negative integer to reschedule the due date only. Keeping the current IVL.
 - Undo reschedules
 - Unlike other reschedulers, this addon will not reset the ease factor on rescheduling as it avoids the anki api.
 - Compatible with addon:noFuzzWhatsoever
+- Compatible with addon:FreeWeekend or loadBalancer
 
 ### Browser Support:
 You can turn on the browser features in config options and have ReMemorize replace Anki's rescheduling methods.
