@@ -2,7 +2,7 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.3.4
+# Version: 0.3.5
 
 
 from aqt import mw
@@ -115,9 +115,13 @@ class ReMemorize:
     def updateStats(self, card): #subtract count from new/rev queue
         if card.queue == 0:
             mw.col.sched._updateStats(card, 'new')
-        else:
+        elif card.queue == 2:
             mw.col.sched._updateStats(card, 'rev')
-        #Note: There's no lrnToday key
+
+        #Note: There's no lrnToday key in V2
+        #mw.reset will reset the lrn count, making this unnecessary
+        # elif card.type == 1 and mw.col.sched.name!="std2":
+            # mw.col.sched._updateStats(card, 'lrn')
 
 
     def parseDate(self, days):
@@ -141,6 +145,9 @@ Reschedule Days: (0=forget, neg=keep IVL) Or 1/15/2020
         c=neg=None
         if days[0]=='p': #previous card, p prefix, changes due date after grading
             c=mw.reviewer.lastCard()
+            if not c:
+                showInfo('Previous card not found.')
+                return
             days=days[1:]
 
         if days[0]=='-': #negative num, change due, keep interval
