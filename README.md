@@ -35,16 +35,16 @@ You can turn on the browser features in config options and have ReMemorize repla
 
 
 ### Input:
-p - previous card
-- (dash) - change due only
-m/d - month/date
-m/d/y - month/date/year
-n - interval and due to n days
+p - previous card  
+\- (dash) - change due only  
+m/d - month/date  
+m/d/y - month/date/year  
+n - interval and due to n days  
 
 
--3 - change due to 3 days
-p5 - change interval and due of previous card to 5
-p-5/15 - change due of previous card to May 15th
+\-3 - change due to 3 days  
+p5 - change interval and due of previous card to 5  
+p-5/15 - change due of previous card to May 15th  
 
 
 ### Configs:
