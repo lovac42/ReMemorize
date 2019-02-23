@@ -2,7 +2,7 @@
 
 https://ankiweb.net/shared/info/323586997  
 
-<i>"It is recommended that you always re-memorize items whose content has changed significantly ... Re-memorize items of high priority that have changed or which are extremely important to your knowledge at a given moment."<i> --<b>Excerpt from the SM 20 Rules.</b>
+<i>"It is recommended that you always re-memorize items whose content has changed significantly ... Re-memorize items of high priority that have changed or which are extremely important to your knowledge at a given moment."</i> --<b>Excerpt from the SM 20 Rules.</b>
 
 ## About:
 This addon allow users to manually adjust properties of the current card in the reviewer. It is meant for advanced users who seek to fine tune certain values. Beginners should avoid tampering with the card values and go read the friendly manual, incrementally or normally.
@@ -13,6 +13,17 @@ Positive integer to reschedule the card's ivl and due date.
 Negative integer to reschedule the due date only. Keeping the current IVL.  
 You may enter specific dates such as 1/20 or 1/25/2019, this will change the interval and due date (with fuzz). Similar to negative integers, use negative prefix to change the due date only. -1/20, -1/25, etc...  
 ReMemorize operates on the current card in the reviewer by default. The "p" prefix (lowercase) will operate on the previous card. p7, p-25, p-1/23, etc...  
+
+p - previous card  
+\- (dash) - change due only  
+m/d - month/date  
+m/d/y - month/date/year  
+n - interval and due to n days  
+
+
+\-3 - change due to 3 days  
+p5 - change interval and due of previous card to 5  
+p-5/15 - change due of previous card to May 15th  
 
 
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/gettext.png" />  
@@ -32,19 +43,6 @@ ReMemorize operates on the current card in the reviewer by default. The "p" pref
 You can turn on the browser features in config options and have ReMemorize replace Anki's rescheduling methods.
 
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/config.png" />  
-
-
-### Input:
-p - previous card  
-\- (dash) - change due only  
-m/d - month/date  
-m/d/y - month/date/year  
-n - interval and due to n days  
-
-
-\-3 - change due to 3 days  
-p5 - change interval and due of previous card to 5  
-p-5/15 - change due of previous card to May 15th  
 
 
 ### Configs:
