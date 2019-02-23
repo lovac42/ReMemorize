@@ -9,4 +9,4 @@ move checksum.md5 %REPO%/checksum.md5
 %ZIP% %REPO%_20.zip *.py %REPO%/*.*
 
 cd %REPO%
-%ZIP% ../%REPO%_21.zip *.*
+%ZIP% ../%REPO%_21.ankiaddon *.*
