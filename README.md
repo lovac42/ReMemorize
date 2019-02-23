@@ -31,6 +31,22 @@ ReMemorize operates on the current card in the reviewer by default. The "p" pref
 ### Browser Support:
 You can turn on the browser features in config options and have ReMemorize replace Anki's rescheduling methods.
 
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/config.png" />  
+
+
+### Input:
+p - previous card
+- (dash) - change due only
+m/d - month/date
+m/d/y - month/date/year
+n - interval and due to n days
+
+
+-3 - change due to 3 days
+p5 - change interval and due of previous card to 5
+p-5/15 - change due of previous card to May 15th
+
+
 ### Configs:
 Various configs are included in config options including helpful (or unhelpful) notes.  
 Anki 2.0 users will need to use the <a href="https://ankiweb.net/shared/info/2058082580">backported addonManager21</a> to change these values.  
@@ -49,14 +65,24 @@ runHook("ReMemorize.reschedule", card, 100)     #reschedule 100 days (due+ivl)
 runHook("ReMemorize.changeDue", card, 100)      #reschedule 100 days (due)
 runHook("ReMemorize.forgetAll", cids)           #make new
 runHook("ReMemorize.rescheduleAll", cids, 1, 7) #reschedule rand 1-7 (due+ivl)
+runHook("ReMemorize.changeDueAll", cids, 1, 1)  #reschedule 1,2,3,4... (due+stepping)
 ```
+
 
 ## Screenshots:
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/studymenu.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/gettext.png" />  
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/input_opt.png" />  
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/date_opt.png" />  
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/o_opt.png" />  
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/neg_opt.png" />  
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/pos_opt.png" />  
+
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/reschedule.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/stats.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/dueDate.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/stepDates.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/randomDates.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/randStepDates.png" />  
+
+

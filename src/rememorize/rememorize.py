@@ -2,7 +2,6 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.3.5
 
 
 from aqt import mw
@@ -197,6 +196,14 @@ Reschedule Days: (0=forget, neg=keep IVL) Or 1/15/2020
         c=mw.reviewer.card
         fct, ok = getText("Change Ease Factor:", default=str(c.factor))
         if not ok: return
+
+        if fct[0]=='p': #previous card
+            c=mw.reviewer.lastCard()
+            if not c:
+                showInfo('Previous card not found.')
+                return
+            fct=fct[1:]
+
         c.factor=max(1300,int(fct))
         c.flushSched()
         tooltip(_("Card factor changed"), period=1000)

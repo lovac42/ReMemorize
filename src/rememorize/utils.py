@@ -2,7 +2,6 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.3.0
 
 
 from aqt import mw
@@ -29,8 +28,8 @@ def customReschedCards(ids, imin, imax, logging=True, lbal=False):
         card=mw.col.getCard(id)
         if markForUndo: #see bug/feature comment in readme.
             mw.col.markReview(card)
-        else:
-            mw.reviewer.card=card #swap for checks - deFuzz
+        else: #if not in reviewer
+            mw.reviewer.card=card #swap for config checking (e.g. deFuzz/FreeWeekEnd deck options)
 
         if card.type in (0,1):
             initNewCard(card)
