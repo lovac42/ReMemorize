@@ -2,13 +2,12 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.9
 
 
 from aqt import mw
 from aqt.qt import *
 from anki.hooks import addHook
-from aqt.utils import getText
+from aqt.utils import getText, showInfo
 from .utils import *
 from .const import *
 from .config import *
@@ -17,6 +16,8 @@ ADDON_NAME='rememorize'
 
 
 class ReMemorize:
+    loaded=False
+
     def __init__(self):
         self.conf=Config(ADDON_NAME)
         addHook(ADDON_NAME+".configLoaded", self.onConfigLoaded)
@@ -28,9 +29,16 @@ class ReMemorize:
         addHook('ReMemorize.reschedule', self.reschedCards) #w/ siblings & conf settings
         addHook('ReMemorize.rescheduleAll', self.reschedSelected) #util wrapper
         addHook('ReMemorize.changeDue', self.changeDue)
+        addHook('ReMemorize.changeDueAll', self.changeDueSelected)
 
 
     def onConfigLoaded(self):
+        if not self.loaded:
+            self.setupMenu()
+            self.loaded=True
+
+
+    def setupMenu(self):
         menu=None
         for a in mw.form.menubar.actions():
             if '&Study' == a.text():
@@ -86,66 +94,93 @@ class ReMemorize:
         mw.progress.finish()
 
 
-    def reschedSelected(self, cids, imin, imax, logging=True):
+    def reschedSelected(self, cids, imin, imax, logging=True, lbal=False):
         "wrapper, access to util function"
         mw.progress.start()
-        customReschedCards(cids, imin, imax, logging)
+        customReschedCards(cids,imin,imax,logging,lbal)
         mw.autosave()
         mw.progress.finish()
 
     def reschedCards(self, card, days):
-        #undo() moved to customReschedCards()
         log=self.conf.get("revlog_rescheduled",True)
-
+        fuzz=self.conf.get("fuzz_days",True)
         if self.conf.get("reschedule_sibling",False):
             cids=self.getSiblings(card.nid)
         else:
             cids=[card.id]
-
-        if self.conf.get("fuzz_days",True):
-            min, max = mw.col.sched._fuzzIvlRange(days)
-            customReschedCards(cids, min, max, log)
-        else:
-            customReschedCards(cids, days, days, log)
+        customReschedCards(cids,days,days,log,fuzz)
 
 
     def updateStats(self, card): #subtract count from new/rev queue
         if card.queue == 0:
             mw.col.sched._updateStats(card, 'new')
-        else:
+        elif card.queue == 2:
             mw.col.sched._updateStats(card, 'rev')
-        #Note: There's no lrnToday key
+
+        #Note: There's no lrnToday key in V2
+        #mw.reset will reset the lrn count, making this unnecessary
+        # elif card.type == 1 and mw.col.sched.name!="std2":
+            # mw.col.sched._updateStats(card, 'lrn')
 
 
-    def ask(self):
+    def parseDate(self, days):
+        try:
+            return getDays(days)
+        except ValueError: #non date format
+            return days
+        except TypeError: #passed date
+            showInfo("Already passed due date")
+            return None
+
+
+    def ask(self, c, checkBury=True):
         if mw.state != 'review': return
         dft=self.conf.get("default_days_on_ask",7)
-        days, ok = getText("Reschedule Days: (0=forget, neg=keep IVL)", default=str(dft))
+        days, ok = getText("""
+Reschedule Days: (0=forget, neg=keep IVL) Or 1/15/2020
+""", default=str(dft))
         if not ok: return
+
+        c=neg=None
+        if days[0]=='p': #previous card, p prefix, changes due date after grading
+            c=mw.reviewer.lastCard()
+            if not c:
+                showInfo('Previous card not found.')
+                return
+            days=days[1:]
+
+        if days[0]=='-': #negative num, change due, keep interval
+            neg=True
+            days=days[1:]
+
         try:
-            days = int(days)
+            days = int(self.parseDate(days))
+            if neg: days = - days
+        except TypeError: return
         except ValueError: return
 
-        c=mw.reviewer.card
-        if days and self.conf.get("bury_siblings",False):
-            mw.col.sched._burySiblings(c)
+        if not c: #current card
+            c=mw.reviewer.card
+            if days and self.conf.get("bury_siblings",False):
+                mw.col.sched._burySiblings(c)
 
+        tipTxt=self.evalDays(c,days)
+        self._finished(c,tipTxt)
+
+
+    def evalDays(self, c, days):
         if days == 0: #mark as new
             self.forgetCards(c)
-            tipTxt="Card forgotten."
+            return "Card forgotten."
 
         elif days > 0: #change due and ivl
             self.updateStats(c)
             self.reschedCards(c, days)
-            tipTxt="Card rescheduled."
+            return "Card rescheduled."
 
         elif days < 0: #change due date only
             self.changeDue(c, abs(days))
-            tipTxt="Card due date changed."
-
-        self._finished(c,tipTxt)
-
-#TODO parse dates:  datetime.strptime("07/27/2012","%m/%d/%Y")
+            return "Card due date changed."
 
 
     def _finished(self, card, msg):
@@ -161,9 +196,32 @@ class ReMemorize:
         c=mw.reviewer.card
         fct, ok = getText("Change Ease Factor:", default=str(c.factor))
         if not ok: return
+
+        if fct[0]=='p': #previous card
+            c=mw.reviewer.lastCard()
+            if not c:
+                showInfo('Previous card not found.')
+                return
+            fct=fct[1:]
+
         c.factor=max(1300,int(fct))
         c.flushSched()
         tooltip(_("Card factor changed"), period=1000)
+
+
+    def changeDueSelected(self, cids, start=1, step=0, shuffle=False, shift=False):
+        mw.checkpoint(_("Rescheduled"))
+        mw.progress.start()
+        for cid in cids:
+            card=mw.col.getCard(cid)
+            if shuffle:
+                due=random.randint(start,start+step)
+                self.changeDue(card,due)
+            else:
+                self.changeDue(card,start)
+            if shift: start+=step
+        mw.autosave()
+        mw.progress.finish()
 
 
     def changeDue(self, card, days):
@@ -171,26 +229,16 @@ class ReMemorize:
         if mw.state=='review':
             mw.col.markReview(card) #undo
 
-        #initialize new/new-lrn cards
         if card.type in (0,1):
-            conf=mw.col.sched._lrnConf(card)
-            #triggers NC initialization, compatible w/ addon:noFuzzWhatsoever
-            mw.col.sched._rescheduleNew(card,conf,False)
-
-            #log reschedules for new cards since ivl was changed.
+            initNewCard(card)
+            #Log new types only since the IVL changed.
             if self.conf.get("revlog_rescheduled",False):
-                card.type=card.queue=1 #sets lastIvl for log delay
-                card.left=1001
-                try: #records fuzzed/LB ivl
-                    log(card,card.ivl) 
-                except:
-                    time.sleep(0.01) # duplicate pk; retry in 10ms
-                    log(card,card.ivl)
+                trylog(card,card.ivl) #records fuzzed/LB ivl
 
+        card.due=mw.col.sched.today + days
         if card.odid:
             card.did=card.odid
         card.left=card.odid=card.odue=0
         card.type=card.queue=2
-        card.due=mw.col.sched.today + days
         card.flushSched()
 

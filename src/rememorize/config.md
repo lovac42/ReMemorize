@@ -16,7 +16,8 @@ Default days to set when the user presses the hotkey.
 Turn on Logging?
 
 ### fuzz_days:
-Fuzz days or use same date?
+Fuzz interval and due date? true or false  
+Used by positive integer input during review or reschedule option in browser.
 
 ### forget_siblings:
 (On ForgetCard) Make siblings new cards as well?

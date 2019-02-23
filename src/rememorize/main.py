@@ -2,10 +2,9 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.6
 
 
-import aqt, random
+import sys, aqt, random
 from aqt import mw
 from anki.hooks import wrap
 from aqt.utils import getText
@@ -23,12 +22,14 @@ remem=ReMemorize()
 def answerCard(self, card, ease):
     if ease == 1 and remem.conf.get("reschedule_siblings_on_again",False):
         if card.ivl>=21: return #avoid Lapse new ivl option
+        if card.id in mw.reviewer._answeredIds: return
 
         conf=mw.col.decks.confForDid(card.did)
         if not card.odid or conf['resched']:
+            bound=card.ivl+remem.conf.get("sibling_boundary",365)
             cids=[i for i in mw.col.db.list(
                 "select id from cards where nid=? and type=2 and queue=2 and id!=? and ivl > ?",
-                card.nid, card.id, remem.conf.get("sibling_boundary",365))]
+                card.nid, card.id, bound)]
             L=len(cids)
             if L > 0:
                 am=ok=remem.conf.get("automatic_mode",False)
@@ -48,7 +49,8 @@ def reschedCards(self, ids, imin, imax, _old):
         return _old(self, ids, imin, imax)
     mw.requireReset()
     log=remem.conf.get("revlog_rescheduled",True)
-    runHook('ReMemorize.rescheduleAll',ids,imin,imax,log)
+    fuzz=remem.conf.get("fuzz_days",True) #for load balance
+    runHook('ReMemorize.rescheduleAll',ids,imin,imax,log,fuzz)
 
 
 # Replace scheduler.forgetCards called by browser
@@ -56,9 +58,16 @@ def forgetCards(self, ids, _old):
     browConf=remem.conf.get("browser",{})
     if not browConf.get("replace_brower_reschedule",False):
         return _old(self, ids)
-    mw.requireReset()
-    log=remem.conf.get("revlog_rescheduled",True)
-    runHook('ReMemorize.forgetAll',ids,log)
+
+    for i in range (2,5):
+        f=sys._getframe(i) #only wrap for reschedule
+        if f.f_code.co_name == 'reschedule':
+            mw.requireReset()
+            log=remem.conf.get("revlog_rescheduled",True)
+            runHook('ReMemorize.forgetAll',ids,log)
+            return
+    return _old(self, ids) #called by bury card in reviewer
+
 
 
 # Replaces reposition in browser so it changes the due date instead of changing the position of new cards.
@@ -83,24 +92,13 @@ def reposition(self, _old):
     if not d.exec_():
         return
     self.model.beginReset()
-    self.mw.checkpoint(_("Rescheduled"))
     self.mw.requireReset()
 
-    mw.progress.start()
     start=frm.start.value()
     step=frm.step.value()
     shuffle=frm.randomize.isChecked()
     shift=frm.shift.isChecked()
-    for cid in sel:
-        card=mw.col.getCard(cid)
-        if shuffle:
-            due=random.randint(start,start+step)
-            remem.changeDue(card,due)
-        else:
-            remem.changeDue(card,start)
-
-        if shift: start+=step
-    mw.progress.finish()
+    remem.changeDueSelected(sel,start,step,shuffle,shift)
 
     if ANKI21:
         self.search()

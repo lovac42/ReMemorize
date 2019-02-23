@@ -2,19 +2,20 @@
 # Copyright: (C) 2018-2019 Lovac42
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.2.5
 
 
 from aqt import mw
 from aqt.utils import tooltip
 from anki.utils import intTime, ids2str
-import random, time
+import random, time, datetime
 from .const import *
 
 
 #From: anki.sched.Scheduler
 #Mods: removed resetting ease factor, added logs
-def customReschedCards(ids, imin, imax, logging=True):
+# if lbal is true, only imin is used.
+def customReschedCards(ids, imin, imax, logging=True, lbal=False):
+    revCard=mw.reviewer.card
     markForUndo=True
     if mw.state!='review':
         markForUndo=False
@@ -27,30 +28,23 @@ def customReschedCards(ids, imin, imax, logging=True):
         card=mw.col.getCard(id)
         if markForUndo: #see bug/feature comment in readme.
             mw.col.markReview(card)
+        else: #if not in reviewer
+            mw.reviewer.card=card #swap for config checking (e.g. deFuzz/FreeWeekEnd deck options)
 
-        #initialize new/new-lrn cards
         if card.type in (0,1):
-            conf=mw.col.sched._lrnConf(card)
-            #triggers NC initialization, compatible w/ addon:noFuzzWhatsoever
-            mw.col.sched._rescheduleNew(card,conf,False)
-            card.type=card.queue=1 #sets lastIvl for log delay
-            card.left=1001
-
-        r = random.randint(imin, imax)
+            initNewCard(card)
+        r=adjInterval(imin,imax,lbal)
         ivl = max(1, r)
         d.append(dict(id=id, due=r+t, ivl=ivl, mod=mod, usn=mw.col.usn(), fact=card.factor))
-        if logging:
-            try:
-                log(card,ivl)
-            except:
-                time.sleep(0.01) # duplicate pk; retry in 10ms
-                log(card,ivl)
+        if logging: trylog(card,ivl)
 
     mw.col.sched.remFromDyn(ids)
     mw.col.db.executemany("""
 update cards set type=2,queue=2,left=0,ivl=:ivl,due=:due,odue=0,
 usn=:usn,mod=:mod,factor=:fact where id=:id""", d)
     mw.col.log(ids)
+    mw.reviewer.card=revCard
+
 
 
 #From: anki.sched.Scheduler
@@ -69,11 +63,7 @@ def customForgetCards(cids, logging=True):
             mw.col.markReview(card) #undo
         if logging and card.type and card.queue:
             card.factor=0 #log as n/a
-            try:
-                log(card,0) #shows in log as "0d"
-            except:
-                time.sleep(0.01) # duplicate pk; retry in 10ms
-                log(card,0)
+            trylog(card,0) #shows in log as "0d"
 
     mw.col.db.execute(
         "update cards set type=0,queue=0,left=0,ivl=0,due=0,odue=0,factor=0"
@@ -83,6 +73,15 @@ def customForgetCards(cids, logging=True):
     # takes care of mod + usn
     mw.col.sched.sortCards(cids, start=pmax+1)
     mw.col.log(cids)
+
+
+
+def trylog(card,ivl):
+    try:
+        log(card,ivl)
+    except:
+        time.sleep(0.01) # duplicate pk; retry in 10ms
+        log(card,ivl)
 
 
 #lastIvl = card.ivl
@@ -102,3 +101,35 @@ def getDelay(card):
     conf=mw.col.sched._lrnConf(card)
     left=card.left%1000
     return mw.col.sched._delayForGrade(conf,left)
+
+
+#triggers NC initialization, compatible w/ addon:noFuzzWhatsoever
+def initNewCard(card):
+    conf=mw.col.sched._lrnConf(card)
+    mw.col.sched._rescheduleNew(card,conf,False)
+    card.type=card.queue=1 #log delay
+    card.left=1001 #sets lastIvl with last learning step
+
+
+#Invoke Load Balancer or noFuzzWSE
+def adjInterval(imin,imax,lbal=False):
+    if not lbal:
+        return random.randint(imin,imax) #likely the same num
+    if mw.col.sched.name=="std2": #xquercus LBal, noFuzzWSE
+        return mw.col.sched._fuzzedIvl(imin)
+    else: #jake/xquercus LBal, noFuzzWSE
+        return mw.col.sched._adjRevIvl(None,imin)
+
+
+def getDays(date_str):
+    d=datetime.datetime.today()
+    today=datetime.datetime(d.year, d.month, d.day)
+    try:
+        due=datetime.datetime.strptime(date_str,'%m/%d/%Y')
+    except ValueError:
+        date_str=date_str+'/'+str(d.year)
+        due=datetime.datetime.strptime(date_str,'%m/%d/%Y')
+    diff=(due-today).days
+    if diff<1: return None
+    return diff
+

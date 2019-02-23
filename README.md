@@ -11,6 +11,9 @@ This addon allow users to manually adjust properties of the current card in the 
 Enter zero to reset the card as new.  
 Positive integer to reschedule the card's ivl and due date.  
 Negative integer to reschedule the due date only. Keeping the current IVL.  
+You may enter specific dates such as 1/20 or 1/25/2019, this will change the interval and due date (with fuzz). Similar to negative integers, use negative prefix to change the due date only. -1/20, -1/25, etc...  
+ReMemorize operates on the current card in the reviewer by default. The "p" prefix (lowercase) will operate on the previous card. p7, p-25, p-1/23, etc...  
+
 
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/gettext.png" />  
 
@@ -23,9 +26,26 @@ Negative integer to reschedule the due date only. Keeping the current IVL.
 - Undo reschedules
 - Unlike other reschedulers, this addon will not reset the ease factor on rescheduling as it avoids the anki api.
 - Compatible with addon:noFuzzWhatsoever
+- Compatible with addon:FreeWeekend or loadBalancer
 
 ### Browser Support:
 You can turn on the browser features in config options and have ReMemorize replace Anki's rescheduling methods.
+
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/config.png" />  
+
+
+### Input:
+p - previous card
+- (dash) - change due only
+m/d - month/date
+m/d/y - month/date/year
+n - interval and due to n days
+
+
+-3 - change due to 3 days
+p5 - change interval and due of previous card to 5
+p-5/15 - change due of previous card to May 15th
+
 
 ### Configs:
 Various configs are included in config options including helpful (or unhelpful) notes.  
@@ -45,14 +65,24 @@ runHook("ReMemorize.reschedule", card, 100)     #reschedule 100 days (due+ivl)
 runHook("ReMemorize.changeDue", card, 100)      #reschedule 100 days (due)
 runHook("ReMemorize.forgetAll", cids)           #make new
 runHook("ReMemorize.rescheduleAll", cids, 1, 7) #reschedule rand 1-7 (due+ivl)
+runHook("ReMemorize.changeDueAll", cids, 1, 1)  #reschedule 1,2,3,4... (due+stepping)
 ```
+
 
 ## Screenshots:
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/studymenu.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/gettext.png" />  
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/input_opt.png" />  
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/date_opt.png" />  
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/o_opt.png" />  
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/neg_opt.png" />  
+<img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/pos_opt.png" />  
+
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/reschedule.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/stats.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/dueDate.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/stepDates.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/randomDates.png" />  
 <img src="https://raw.githubusercontent.com/lovac42/ReMemorize/master/screenshots/randStepDates.png" />  
+
+
