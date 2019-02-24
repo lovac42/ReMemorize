@@ -33,7 +33,7 @@ def customReschedCards(ids, imin, imax, logging=True, lbal=False):
 
         if card.type in (0,1):
             initNewCard(card)
-        r=adjInterval(imin,imax,lbal)
+        r=adjInterval(card,imin,imax,lbal)
         ivl = max(1, r)
         d.append(dict(id=id, due=r+t, ivl=ivl, mod=mod, usn=mw.col.usn(), fact=card.factor))
         if logging: trylog(card,ivl)
@@ -112,13 +112,13 @@ def initNewCard(card):
 
 
 #Invoke Load Balancer or noFuzzWSE
-def adjInterval(imin,imax,lbal=False):
+def adjInterval(card,imin,imax,lbal=False):
     if not lbal:
         return random.randint(imin,imax) #likely the same num
     if mw.col.sched.name=="std2": #xquercus LBal, noFuzzWSE
         return mw.col.sched._fuzzedIvl(imin)
     else: #jake/xquercus LBal, noFuzzWSE
-        return mw.col.sched._adjRevIvl(None,imin)
+        return mw.col.sched._adjRevIvl(card,imin)
 
 
 def getDays(date_str):
