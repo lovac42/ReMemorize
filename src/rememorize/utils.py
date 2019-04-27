@@ -5,9 +5,11 @@
 
 
 from aqt import mw
-from aqt.utils import tooltip
+from aqt.qt import *
+from aqt.utils import tooltip, showInfo
 from anki.utils import intTime, ids2str
 import random, time, datetime
+import aqt.utils
 from anki.lang import _
 from .const import *
 
@@ -89,27 +91,35 @@ def trylog(card,ivl):
 #ease=0, timeTaken=0
 #custom log type: 4 = rescheduled
 def log(card, ivl):
-    delay=getDelay(card)
+    lastIvl=getLastIvl(card)
     logId = intTime(1000)
     mw.col.db.execute(
         "insert into revlog values (?,?,?,0,?,?,?,0,4)",
         logId, card.id, mw.col.usn(),
-        ivl, -delay or card.ivl or 1, card.factor)
+        ivl, lastIvl, card.factor)
 
 
-def getDelay(card):
-    if card.queue not in (1,3): return 0
+
+def getLastIvl(card):
+    # records the from ivl from data recorded in the revlog.
+    timeOrIvl=mw.col.db.scalar("""
+Select ivl from revlog where cid = ? 
+order by id desc limit 1""",card.id)
+    if timeOrIvl:
+        return timeOrIvl
+    #no logged data, new cards
     conf=mw.col.sched._lrnConf(card)
-    left=card.left%1000
-    return mw.col.sched._delayForGrade(conf,left)
+    left=mw.col.sched._startingLeft(card)
+    return - mw.col.sched._delayForGrade(conf,left) #negate
+
 
 
 #triggers NC initialization, compatible w/ addon:noFuzzWhatsoever
 def initNewCard(card):
     conf=mw.col.sched._lrnConf(card)
     mw.col.sched._rescheduleNew(card,conf,False)
-    card.type=card.queue=1 #log delay
-    card.left=1001 #sets lastIvl with last learning step
+    card.type=card.queue=1 #log delay as lrn
+
 
 
 #Invoke Load Balancer or noFuzzWSE
@@ -122,6 +132,18 @@ def adjInterval(card,imin,imax,lbal=False):
         return mw.col.sched._adjRevIvl(card,imin)
 
 
+
+
+def parseDate(days):
+    try:
+        return getDays(days)
+    except ValueError: #non date format
+        return days
+    except TypeError: #passed date
+        showInfo("Already passed due date")
+        return None
+
+
 def getDays(date_str):
     d=datetime.datetime.today()
     today=datetime.datetime(d.year, d.month, d.day)
@@ -131,6 +153,14 @@ def getDays(date_str):
         date_str=date_str+'/'+str(d.year)
         due=datetime.datetime.strptime(date_str,'%m/%d/%Y')
     diff=(due-today).days
-    if diff<1: return None
+    if diff<1: raise TypeError
     return diff
+
+
+
+def tooltipHint(msg, period):
+    tooltip(_(msg), period=period)
+    aw=mw.app.activeWindow() or mw
+    aqt.utils._tooltipLabel.move(
+        aw.mapToGlobal(QPoint( aw.width()/2 -100, aw.height() -200)))
 

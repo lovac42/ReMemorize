@@ -19,14 +19,20 @@ Turn on Logging?
 Fuzz interval and due date? true or false  
 Used by positive integer input during review or reschedule option in browser.
 
-### forget_siblings:
-(On ForgetCard) Make siblings new cards as well?
-
 ### bury_siblings:
 Bury sibling cards due today if the current card has been rescheduled.
 
+### forget_siblings:
+(On ForgetCard) Make siblings into new cards as well?  
+(This will not affect the browser.)  
+Useful for flipping through unspended old material.  
+Do not forget to turn this back off.  
+
 ### reschedule_sibling:
-(On RescheduleCard) Reschedule siblings as well?
+(On RescheduleCard) Reschedule siblings as well?  
+(This will not affect the browser.)  
+Useful for going through imported shared decks with alot of siblings.  
+Do not forget to turn this back off.  
 
 ### reschedule_siblings_on_again:
 Checks sibling boundary whenever the "Again" button was pressed. e.g. The front is due tomorrow as a leech card with an IVL of 1 and the reverse card is due in 9 month from now with an IVL of 450.
