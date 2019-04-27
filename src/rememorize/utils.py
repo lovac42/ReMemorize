@@ -8,6 +8,7 @@ from aqt import mw
 from aqt.utils import tooltip
 from anki.utils import intTime, ids2str
 import random, time, datetime
+from anki.lang import _
 from .const import *
 
 
@@ -88,34 +89,27 @@ def trylog(card,ivl):
 #ease=0, timeTaken=0
 #custom log type: 4 = rescheduled
 def log(card, ivl):
-    lastIvl=getLastIvl(card)
+    delay=getDelay(card)
     logId = intTime(1000)
     mw.col.db.execute(
         "insert into revlog values (?,?,?,0,?,?,?,0,4)",
         logId, card.id, mw.col.usn(),
-        ivl, lastIvl, card.factor)
+        ivl, -delay or card.ivl or 1, card.factor)
 
 
-def getLastIvl(card):
-    if card.queue==2:
-        return card.ivl or 1
-    if card.type: #not new
-        # get last lrn step delay from revlog
-        ivl=mw.col.db.scalar("""
-    Select ivl from revlog where cid = ? 
-    order by id desc limit 1""",card.id)
-        if ivl and ivl<0:
-            return int(ivl)
-    left=mw.col.sched._startingLeft(card)
+def getDelay(card):
+    if card.queue not in (1,3): return 0
     conf=mw.col.sched._lrnConf(card)
-    return - mw.col.sched._delayForGrade(conf,left)
+    left=card.left%1000
+    return mw.col.sched._delayForGrade(conf,left)
 
 
 #triggers NC initialization, compatible w/ addon:noFuzzWhatsoever
 def initNewCard(card):
     conf=mw.col.sched._lrnConf(card)
     mw.col.sched._rescheduleNew(card,conf,False)
-    card.type=card.queue=1 #log delay as lrn
+    card.type=card.queue=1 #log delay
+    card.left=1001 #sets lastIvl with last learning step
 
 
 #Invoke Load Balancer or noFuzzWSE
