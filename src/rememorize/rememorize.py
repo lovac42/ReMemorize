@@ -8,9 +8,11 @@ from aqt import mw
 from aqt.qt import *
 from anki.hooks import addHook
 from aqt.utils import getText, showInfo
+from anki.lang import _
 from .utils import *
 from .const import *
 from .config import *
+import re
 
 ADDON_NAME='rememorize'
 
@@ -25,9 +27,9 @@ class ReMemorize:
         #Allows other GUIs to tap into
         # e.g. runHook("ReMemorize.reschedule", card, 100)
         addHook('ReMemorize.forget', self.forgetCards) #w/ siblings & conf settings
-        addHook('ReMemorize.forgetAll', self.forgetSelected) #util wrapper
+        addHook('ReMemorize.forgetAll', self.forgetSelected) #util wrapper, no siblings
         addHook('ReMemorize.reschedule', self.reschedCards) #w/ siblings & conf settings
-        addHook('ReMemorize.rescheduleAll', self.reschedSelected) #util wrapper
+        addHook('ReMemorize.rescheduleAll', self.reschedSelected) #util wrapper, no siblings
         addHook('ReMemorize.changeDue', self.changeDue)
         addHook('ReMemorize.changeDueAll', self.changeDueSelected)
 
@@ -48,19 +50,19 @@ class ReMemorize:
         if not menu:
             menu=mw.form.menubar.addMenu('&Study')
 
-        mnew = QAction("reMemorize: Forget note", mw)
+        mnew = QAction("ReMemorize: Forget Card(s)", mw)
         key=self.conf.get("fg_hotkey",None)
         if key: mnew.setShortcut(QKeySequence(key))
         mnew.triggered.connect(self._forgetCards)
         menu.addAction(mnew)
 
-        cef = QAction("reMemorize: Change Card Factor", mw)
+        cef = QAction("ReMemorize: Change Card Factor", mw)
         key=self.conf.get("ef_hotkey",None)
         if key: cef.setShortcut(QKeySequence(key))
         cef.triggered.connect(self.changeEF)
         menu.addAction(cef)
 
-        mdays = QAction("reMemorize: Reschedule", mw)
+        mdays = QAction("ReMemorize: Reschedule", mw)
         key=self.conf.get("hotkey",None)
         if key: mdays.setShortcut(QKeySequence(key))
         mdays.triggered.connect(self.ask)
@@ -75,8 +77,8 @@ class ReMemorize:
     def _forgetCards(self): #triggered from study menu
         if mw.state != 'review': return
         card=mw.reviewer.card
-        self.forgetCards(card)
-        self._finished(card,"Card forgotten.")
+        cnt=self.forgetCards(card)
+        self._finished(card,"%d Card(s) forgotten."%cnt)
 
     def forgetCards(self, card):
         if self.conf.get("forget_siblings",False):
@@ -85,6 +87,7 @@ class ReMemorize:
             cids=[card.id]
         logging=self.conf.get("revlog_rescheduled",False)
         customForgetCards(cids,logging)
+        return len(cids)
 
     def forgetSelected(self, cids, logging=True):
         "wrapper, access to util function"
@@ -109,6 +112,7 @@ class ReMemorize:
         else:
             cids=[card.id]
         customReschedCards(cids,days,days,log,fuzz)
+        return len(cids)
 
 
     def updateStats(self, card): #subtract count from new/rev queue
@@ -123,38 +127,43 @@ class ReMemorize:
             # mw.col.sched._updateStats(card, 'lrn')
 
 
-    def parseDate(self, days):
-        try:
-            return getDays(days)
-        except ValueError: #non date format
-            return days
-        except TypeError: #passed date
-            showInfo("Already passed due date")
-            return None
-
 
     def ask(self, c, checkBury=True):
         if mw.state != 'review': return
         dft=self.conf.get("default_days_on_ask",7)
-        days, ok = getText("""
+        dStr, ok = getText("""
 Reschedule Days: (0=forget, neg=keep IVL) Or 1/15/2020
 """, default=str(dft))
         if not ok: return
 
-        c=neg=None
-        if days[0]=='p': #previous card, p prefix, changes due date after grading
+        # Verify input string
+        if dStr=='-0':
+            showInfo("PC LOAD LETTER!")
+            return
+        if not re.match('^[p-]{0,2}\d+[\d\/]*$',dStr):
+            showInfo("Invalid Input String.")
+            return
+
+
+        # Checks option flags: p-7 or -p7
+        pos=0; c=neg=None;
+        opt=dStr[0:2];
+        if 'p' in opt: #previous card, p prefix, changes due date after grading
             c=mw.reviewer.lastCard()
             if not c:
                 showInfo('Previous card not found.')
                 return
-            days=days[1:]
+            pos+=1
 
-        if days[0]=='-': #negative num, change due, keep interval
+        if '-' in opt: #negative num, change due, keep interval
             neg=True
-            days=days[1:]
+            pos+=1
+        dStr=dStr[pos:] if pos else dStr
 
+
+        # Convert date/days to integer
         try:
-            days = int(self.parseDate(days))
+            days = int(parseDate(dStr))
             if neg: days = - days
         except TypeError: return
         except ValueError: return
@@ -170,13 +179,13 @@ Reschedule Days: (0=forget, neg=keep IVL) Or 1/15/2020
 
     def evalDays(self, c, days):
         if days == 0: #mark as new
-            self.forgetCards(c)
-            return "Card forgotten."
+            cnt=self.forgetCards(c)
+            return "%d Card(s) forgotten."%cnt
 
         elif days > 0: #change due and ivl
             self.updateStats(c)
-            self.reschedCards(c, days)
-            return "Card rescheduled."
+            cnt=self.reschedCards(c, days)
+            return "%d Card(s) rescheduled."%cnt
 
         elif days < 0: #change due date only
             self.changeDue(c, abs(days))
@@ -188,7 +197,7 @@ Reschedule Days: (0=forget, neg=keep IVL) Or 1/15/2020
         mw.reviewer._answeredIds.append(card.id)
         mw.autosave()
         mw.reset()
-        tooltip(_(msg), period=1000)
+        tooltipHint(msg,1200)
 
 
     def changeEF(self):
@@ -206,7 +215,7 @@ Reschedule Days: (0=forget, neg=keep IVL) Or 1/15/2020
 
         c.factor=max(1300,int(fct))
         c.flushSched()
-        tooltip(_("Card factor changed"), period=1000)
+        tooltipHint("Card factor changed",1200)
 
 
     def changeDueSelected(self, cids, start=1, step=0, shuffle=False, shift=False):

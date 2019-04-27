@@ -5,6 +5,7 @@ set REPO=rememorize
 fsum -r -jm -md5 -d%REPO% * > checksum.md5
 move checksum.md5 %REPO%/checksum.md5
 
+quick_manifest.exe "ReMemorize" "323586997" >%REPO%/manifest.json
 
 %ZIP% %REPO%_20.zip *.py %REPO%/*.*
 
