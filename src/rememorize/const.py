@@ -15,3 +15,4 @@
 from anki import version
 ANKI21 = version.startswith("2.1.")
 
+BROWSER_TAG="_reschedule" if ANKI21 else "reschedule"

@@ -42,15 +42,24 @@ def answerCard(self, card, ease):
                     customReschedCards(cids,dMin,dMax,log)
 
 
+
+BROWSER_TAG="_reschedule" if ANKI21 else "reschedule" #TODO: MV to const.py
 # Replace scheduler.reschedCards called by browser
 def reschedCards(self, ids, imin, imax, _old):
     browConf=remem.conf.get("browser",{})
     if not browConf.get("replace_brower_reschedule",False):
         return _old(self, ids, imin, imax)
-    mw.requireReset()
-    log=remem.conf.get("revlog_rescheduled",True)
-    fuzz=remem.conf.get("fuzz_days",True) #for load balance
-    runHook('ReMemorize.rescheduleAll',ids,imin,imax,log,fuzz)
+
+    for i in range (2,5): #only wrap for browser calls
+        f=sys._getframe(i)
+        if f.f_code.co_name==BROWSER_TAG:
+            mw.requireReset()
+            log=remem.conf.get("revlog_rescheduled",True)
+            fuzz=remem.conf.get("fuzz_days",True) #for load balance
+            runHook('ReMemorize.rescheduleAll',ids,imin,imax,log,fuzz)
+            return
+    return _old(self, ids, imin, imax) #called by other addons in reviewer.
+
 
 
 # Replace scheduler.forgetCards called by browser
@@ -61,7 +70,7 @@ def forgetCards(self, ids, _old):
 
     for i in range (2,5):
         f=sys._getframe(i) #only wrap for reschedule
-        if f.f_code.co_name == 'reschedule':
+        if f.f_code.co_name==BROWSER_TAG:
             mw.requireReset()
             log=remem.conf.get("revlog_rescheduled",True)
             runHook('ReMemorize.forgetAll',ids,log)
@@ -87,10 +96,11 @@ def reposition(self, _old):
     d.setWindowModality(Qt.WindowModal)
     frm = aqt.forms.reposition.Ui_Dialog()
     frm.setupUi(d)
+    frm.start.setMinimum(0)
+
     txt = _("Reschedule due date:")
     frm.label.setText(txt)
-    if not d.exec_():
-        return
+    if not d.exec_(): return
     self.model.beginReset()
     self.mw.requireReset()
 
