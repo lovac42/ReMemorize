@@ -43,7 +43,6 @@ def answerCard(self, card, ease):
 
 
 
-BROWSER_TAG="_reschedule" if ANKI21 else "reschedule" #TODO: MV to const.py
 # Replace scheduler.reschedCards called by browser
 def reschedCards(self, ids, imin, imax, _old):
     browConf=remem.conf.get("browser",{})
@@ -51,7 +50,10 @@ def reschedCards(self, ids, imin, imax, _old):
         return _old(self, ids, imin, imax)
 
     for i in range (2,5): #only wrap for browser calls
-        f=sys._getframe(i)
+        try:
+            f=sys._getframe(i)
+        except ValueError: break
+
         if f.f_code.co_name==BROWSER_TAG:
             mw.requireReset()
             log=remem.conf.get("revlog_rescheduled",True)
@@ -68,8 +70,11 @@ def forgetCards(self, ids, _old):
     if not browConf.get("replace_brower_reschedule",False):
         return _old(self, ids)
 
-    for i in range (2,5):
-        f=sys._getframe(i) #only wrap for reschedule
+    for i in range (2,5): #only wrap for browser calls
+        try:
+            f=sys._getframe(i)
+        except ValueError: break
+
         if f.f_code.co_name==BROWSER_TAG:
             mw.requireReset()
             log=remem.conf.get("revlog_rescheduled",True)
@@ -84,8 +89,8 @@ def reposition(self, _old):
     browConf=remem.conf.get("browser",{})
     if not browConf.get("replace_brower_reposition",False):
         return _old(self)
-    sel = self.selectedCards() #mixed selection
 
+    sel = self.selectedCards() #mixed selection
     if browConf.get("skip_new_card_types_on_reposition",False):
         newType = self.col.db.list(
             "select id from cards where type = 0 and id in " + ids2str(sel))
@@ -128,4 +133,3 @@ if ANKI21:
     anki.schedv2.Scheduler.reschedCards = wrap(anki.schedv2.Scheduler.reschedCards, reschedCards, 'around')
     anki.schedv2.Scheduler.forgetCards = wrap(anki.schedv2.Scheduler.forgetCards, forgetCards, 'around')
     aqt.browser.Browser._reposition = wrap(aqt.browser.Browser._reposition, reposition, 'around')
-
