@@ -20,16 +20,16 @@ from .const import *
 def customReschedCards(ids, imin, imax, logging=True, lbal=False):
     revCard=mw.reviewer.card
     markForUndo=True
-    if mw.state!='review':
+    if mw.state!='review' or len(ids)>1:
         markForUndo=False
-        mw.checkpoint(_("Rescheduled")) #undo state, inc siblings
+        mw.checkpoint(_("ReM Rescheduled")) #undo state, inc siblings
 
     d = []
     t = mw.col.sched.today
     mod = intTime()
     for id in ids:
         card=mw.col.getCard(id)
-        if markForUndo: #see bug/feature comment in readme.
+        if markForUndo: #if size of array is one
             mw.col.markReview(card)
         else: #if not in reviewer
             mw.reviewer.card=card #swap for config checking (e.g. deFuzz/FreeWeekEnd deck options)
@@ -54,16 +54,10 @@ usn=:usn,mod=:mod,factor=:fact where id=:id""", d)
 #Mods: added logging, changed sql
 def customForgetCards(cids, logging=True):
     "Put cards at the end of the new queue."
-    markForUndo=True
-    if mw.state!='review':
-        markForUndo=False
-        mw.checkpoint(_("forgetCards"))
-
+    mw.checkpoint(_("ReM forget cards"))
     mw.col.sched.remFromDyn(cids)
     for id in cids:
         card=mw.col.getCard(id)
-        if markForUndo:
-            mw.col.markReview(card) #undo
         if logging and card.type and card.queue:
             card.factor=0 #log as n/a
             trylog(card,0) #shows in log as "0d"

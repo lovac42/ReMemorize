@@ -188,6 +188,7 @@ Reschedule Days: (0=forget, neg=keep IVL) Or 1/15/2020
             return "%d Card(s) rescheduled."%cnt
 
         elif days < 0: #change due date only
+            mw.checkpoint(_("ReM Changed Due"))
             self.changeDue(c, abs(days))
             return "Card due date changed."
 
@@ -203,23 +204,23 @@ Reschedule Days: (0=forget, neg=keep IVL) Or 1/15/2020
     def changeEF(self):
         if mw.state != 'review': return
         c=mw.reviewer.card
-        fct, ok = getText("Change Ease Factor:", default=str(c.factor))
+        fct, ok = getText("Change Ease Factor: (4 digit integer)", default=str(c.factor))
         if not ok: return
 
         if fct[0]=='p': #previous card
             c=mw.reviewer.lastCard()
             if not c:
-                showInfo('Previous card not found.')
+                showInfo(_('Previous card not found.'))
                 return
             fct=fct[1:]
 
         c.factor=max(1300,int(fct))
         c.flushSched()
-        tooltipHint("Card factor changed",1200)
+        tooltipHint(_("Card factor changed"),1200)
 
 
     def changeDueSelected(self, cids, start=1, step=0, shuffle=False, shift=False):
-        mw.checkpoint(_("Rescheduled"))
+        mw.checkpoint(_("ReM Rescheduled"))
         mw.progress.start()
         for cid in cids:
             card=mw.col.getCard(cid)
@@ -235,9 +236,6 @@ Reschedule Days: (0=forget, neg=keep IVL) Or 1/15/2020
 
     def changeDue(self, card, days):
         "Push the due date forward, don't log or change ivl except for new cards"
-        if mw.state=='review':
-            mw.col.markReview(card) #undo
-
         if card.type in (0,1):
             initNewCard(card)
             #Log new types only since the IVL changed.

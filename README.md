@@ -50,10 +50,6 @@ Various configs are included in config options including helpful (or unhelpful) 
 Anki 2.0 users will need to use the <a href="https://ankiweb.net/shared/info/2058082580">backported addonManager21</a> to change these values.  
 
 
-### Bug/feature:
-Undoing reschedules will include siblings as well if sibling rescheduling was turned on.  
-Note: The undo feature in Anki only allows one of two types, reviews and checkpoints. Switching types will clear the other. Here we need checkpoints for undoing siblings, but grading reviews will delete the checkpoints. So we opt to pop each card on to the undo stack, but this requires the user to manually undo each card and their sibling. Fixing this will require rewriting the whole undo feature of Anki.
-
 
 ## runHooks:
 Addon writers can tap into ReMemorize by using runHooks.  
