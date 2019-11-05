@@ -20,7 +20,7 @@ from .const import *
 def customReschedCards(ids, imin, imax, logging=True, lbal=False):
     revCard=mw.reviewer.card
     markForUndo=True
-    if mw.state!='review' or len(ids)>1:
+    if mw.state!='review' or len(ids)>1 or not logging:
         markForUndo=False
         mw.checkpoint(_("ReM Rescheduled")) #undo state, inc siblings
 
