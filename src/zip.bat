@@ -2,7 +2,7 @@
 set ZIP=C:\PROGRA~1\7-Zip\7z.exe a -tzip -y -r
 set REPO=rememorize
 
-set VERSION=1.2.0
+set VERSION=1.2.1
 
 
 REM Init, Version info, Manifest file
