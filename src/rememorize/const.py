@@ -13,6 +13,7 @@
 
 
 from anki import version
-ANKI21 = version.startswith("2.1.")
+CCBC = version.endswith("ccbc")
+ANKI21 = version.startswith("2.1.") and not CCBC
 
 BROWSER_TAG="_reschedule" if ANKI21 else "reschedule"

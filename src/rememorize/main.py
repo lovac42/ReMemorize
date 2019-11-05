@@ -13,6 +13,7 @@ from .rememorize import *
 from .utils import *
 from .const import *
 import anki.sched
+from anki.lang import _
 
 
 remem=ReMemorize()
@@ -126,10 +127,14 @@ def reposition(self, _old):
 anki.sched.Scheduler.answerCard = wrap(anki.sched.Scheduler.answerCard, answerCard, 'after')
 anki.sched.Scheduler.reschedCards = wrap(anki.sched.Scheduler.reschedCards, reschedCards, 'around')
 anki.sched.Scheduler.forgetCards = wrap(anki.sched.Scheduler.forgetCards, forgetCards, 'around')
-aqt.browser.Browser.reposition = wrap(aqt.browser.Browser.reposition, reposition, 'around')
-if ANKI21:
+
+if ANKI21 or CCBC:
     import anki.schedv2
     anki.schedv2.Scheduler.answerCard = wrap(anki.schedv2.Scheduler.answerCard, answerCard, 'after')
     anki.schedv2.Scheduler.reschedCards = wrap(anki.schedv2.Scheduler.reschedCards, reschedCards, 'around')
     anki.schedv2.Scheduler.forgetCards = wrap(anki.schedv2.Scheduler.forgetCards, forgetCards, 'around')
+
+if ANKI21:
     aqt.browser.Browser._reposition = wrap(aqt.browser.Browser._reposition, reposition, 'around')
+else:
+    aqt.browser.Browser.reposition = wrap(aqt.browser.Browser.reposition, reposition, 'around')
