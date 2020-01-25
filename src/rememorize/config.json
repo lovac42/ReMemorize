@@ -4,6 +4,7 @@
     "fg_hotkey": null,
     "default_days_on_ask": 7,
     "revlog_rescheduled": true,
+    "change_due_grad_new_card": true,
     "fuzz_days": true,
     "bury_siblings": false,
     "forget_siblings": false,

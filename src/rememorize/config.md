@@ -20,6 +20,9 @@ Default days to set when the user presses the hotkey.
 ### revlog_rescheduled:
 Turn on Logging?
 
+### change_due_grad_new_card:
+Defaults to true, this graduates new cards when rescheduling due (negative numbers). If you want to keep all the learning steps, then set this to false.
+
 ### fuzz_days:
 Fuzz interval and due date? true or false  
 Used by positive integer input during review or reschedule option in browser.

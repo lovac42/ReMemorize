@@ -235,15 +235,30 @@ Reschedule Days: (0=forget, neg=keep IVL) Or 1/15/2020
     def changeDue(self, card, days):
         "Push the due date forward, don't log or change ivl except for new cards"
         if card.type in (0,1):
-            initNewCard(card)
-            #Log new types only since the IVL changed.
-            if self.conf.get("revlog_rescheduled",False):
-                trylog(card,card.ivl) #records fuzzed/LB ivl
+        #new/new-lrn card
+            if self.conf.get("change_due_grad_new_card",True):
+            #Graduate the new card
+                initNewCard(card)
+                card.ivl=min(days,card.ivl)
+                if self.conf.get("revlog_rescheduled",False):
+                    #Log new types only since the IVL changed.
+                    trylog(card,card.ivl) #records fuzzed/LB ivl
+                TQL=(2,2,0)
+            else:
+            #Set as day-lrn card
+                if not card.left:
+                    #Can't log correctly if lrn steps are jumped.
+                    card.left=mw.col.sched._startingLeft(card)
+                TQL=(1,3,card.left)
+        elif card.queue in (1,3): #lapsed card
+            #Can't log correctly if lrn steps are jumped.
+            TQL=(card.type,3,card.left) #keep type for v1/v2
+        else: #rev card
+            TQL=(2,2,0)
 
         card.due=mw.col.sched.today + days
         if card.odid:
             card.did=card.odid
-        card.left=card.odid=card.odue=0
-        card.type=card.queue=2
+        card.odid=card.odue=0
+        card.type,card.queue,card.left=TQL
         card.flushSched()
-
