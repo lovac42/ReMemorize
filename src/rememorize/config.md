@@ -1,13 +1,18 @@
 # ReMemorize: Rescheduler with sibling and logging
 
+NOTE: Changing config settings do not require a restart unless restart was specified in the notes.
+
 ### hotkey:
-Shortcut for rememorize (Restart required)
+Shortcut for rememorize.  
+(Beware of hotkey conflicts.)
 
 ### ef_hotkey:
-Shortcut for changing ease factor (Restart required)
+Shortcut for changing ease factor.  
+(Beware of hotkey conflicts.)
 
 ### fg_hotkey:
-Shortcut for forget note (Restart required)
+Shortcut for forget note.  
+(Beware of hotkey conflicts.)
 
 ### default_days_on_ask
 Default days to set when the user presses the hotkey.

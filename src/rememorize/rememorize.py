@@ -19,10 +19,12 @@ ADDON_NAME='rememorize'
 
 class ReMemorize:
     loaded=False
+    menuItem={}
 
     def __init__(self):
         self.conf=Config(ADDON_NAME)
         addHook(ADDON_NAME+".configLoaded", self.onConfigLoaded)
+        addHook(ADDON_NAME+".configUpdated", self.onConfigUpdated)
 
         #Allows other GUIs to tap into
         # e.g. runHook("ReMemorize.reschedule", card, 100)
@@ -33,40 +35,36 @@ class ReMemorize:
         addHook('ReMemorize.changeDue', self.changeDue)
         addHook('ReMemorize.changeDueAll', self.changeDueSelected)
 
+    def onConfigUpdated(self):
+        for k in ("fg_hotkey","ef_hotkey","hotkey"):
+            hk=self.conf.get(k,None) or QKeySequence()
+            self.menuItem[k].setShortcut(QKeySequence(hk))
 
     def onConfigLoaded(self):
         if not self.loaded:
             self.setupMenu()
             self.loaded=True
 
-
     def setupMenu(self):
-        menu=None
         for a in mw.form.menubar.actions():
             if '&Study' == a.text():
                 menu=a.menu()
                 menu.addSeparator()
                 break
-        if not menu:
+        else:
             menu=mw.form.menubar.addMenu('&Study')
-
-        mnew = QAction("ReMemorize: Forget Card(s)", mw)
-        key=self.conf.get("fg_hotkey",None)
-        if key: mnew.setShortcut(QKeySequence(key))
-        mnew.triggered.connect(self._forgetCards)
-        menu.addAction(mnew)
-
-        cef = QAction("ReMemorize: Change Card Factor", mw)
-        key=self.conf.get("ef_hotkey",None)
-        if key: cef.setShortcut(QKeySequence(key))
-        cef.triggered.connect(self.changeEF)
-        menu.addAction(cef)
-
-        mdays = QAction("ReMemorize: Reschedule", mw)
-        key=self.conf.get("hotkey",None)
-        if key: mdays.setShortcut(QKeySequence(key))
-        mdays.triggered.connect(self.ask)
-        menu.addAction(mdays)
+        MENU_OPTIONS=( # CONF_KEY, TITLE, CALLBACK
+            ("fg_hotkey", "ReMemorize: Forget Card(s)", self._forgetCards),
+            ("ef_hotkey", "ReMemorize: Change Card Factor", self.changeEF),
+            ("hotkey", "ReMemorize: Reschedule", self.ask)
+        )
+        for k,t,cb in MENU_OPTIONS:
+            hk=self.conf.get(k,None) or QKeySequence()
+            act=QAction(t,mw)
+            act.setShortcut(QKeySequence(hk))
+            act.triggered.connect(cb)
+            menu.addAction(act)
+            self.menuItem[k]=act
 
 
     def getSiblings(self, nid): #includes all cards in note
