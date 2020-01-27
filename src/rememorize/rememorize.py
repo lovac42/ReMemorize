@@ -187,9 +187,15 @@ Reschedule Days: (0=forget, neg=keep IVL) Or 1/15/2020
 
         elif days < 0: #change due date only
             mw.checkpoint(_("ReM Changed Due"))
-            self.changeDue(c, abs(days))
+            d=abs(days)
+            if self.conf.get("fuzz_dues",False):
+                d=mw.col.sched._fuzzedIvl(d)
+            self.changeDue(c,d)
             return "Card due date changed."
 
+        else:
+            print("ReM.evalDays: not possible position")
+            return "ReM.evalDays: not possible position"
 
     def _finished(self, card, msg):
         #for warrior mode last_card preview

@@ -25,7 +25,13 @@ Defaults to true, this graduates new cards when rescheduling due (negative numbe
 
 ### fuzz_days:
 Fuzz interval and due date? true or false  
-Used by positive integer input during review or reschedule option in browser.
+Used by positive integer input during review or reschedule option in browser.  
+Uses Anki's native fuzz api and works with load balancer or free weekend on V1 & V2.
+
+### fuzz_dues:
+Fuzz the due date? true or false  
+Used by negative integer input during reviews.  
+Uses Anki's native fuzz api and works with load balancer or free weekend on V2 only.
 
 ### bury_siblings:
 Bury sibling cards due today if the current card has been rescheduled.
