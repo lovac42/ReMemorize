@@ -32,7 +32,7 @@ class ReMemorize:
         addHook('ReMemorize.forgetAll', self.forgetSelected) #util wrapper, no siblings
         addHook('ReMemorize.reschedule', self.reschedCards) #w/ siblings & conf settings
         addHook('ReMemorize.rescheduleAll', self.reschedSelected) #util wrapper, no siblings
-        addHook('ReMemorize.changeDue', self.changeDue)
+        addHook('ReMemorize.changeDue', self.changeDueSingle)
         addHook('ReMemorize.changeDueAll', self.changeDueSelected)
 
     def onConfigUpdated(self):
@@ -236,6 +236,11 @@ Reschedule Days: (0=forget, neg=keep IVL) Or 1/15/2020
             if shift: start+=step
         mw.autosave()
         mw.progress.finish()
+
+
+    def changeDueSingle(self, card, days):
+        mw.checkpoint(_("ReM Changed Due"))
+        self.changeDue(card, days)
 
 
     def changeDue(self, card, days):
