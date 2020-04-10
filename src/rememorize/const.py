@@ -8,4 +8,8 @@ from anki import version
 CCBC = version.endswith("ccbc")
 ANKI21 = version.startswith("2.1.") and not CCBC
 
-BROWSER_TAG="_reschedule" if ANKI21 else "reschedule"
+
+ADDON_NAME = "rememorize"
+
+BROWSER_TAG = "_reschedule" if ANKI21 else "reschedule"
+

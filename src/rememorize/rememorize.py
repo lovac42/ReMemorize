@@ -4,21 +4,20 @@
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 
+import re
 from aqt import mw
 from aqt.qt import *
 from anki.hooks import addHook
 from aqt.utils import getText, showInfo
 from anki.lang import _
+from .const import ADDON_NAME
+from .config import Config
 from .utils import *
-from .const import *
-from .config import *
-import re
 
-ADDON_NAME='rememorize'
+from .lib.com.lovac42.anki.gui import toolbar
 
 
 class ReMemorize:
-    loaded=False
     menuItem={}
 
     def __init__(self):
@@ -41,29 +40,24 @@ class ReMemorize:
             self.menuItem[k].setShortcut(QKeySequence(hk))
 
     def onConfigLoaded(self):
-        if not self.loaded:
+        if not self.menuItem:
             self.setupMenu()
-            self.loaded=True
 
     def setupMenu(self):
-        for a in mw.form.menubar.actions():
-            if '&Study' == a.text():
-                menu=a.menu()
-                menu.addSeparator()
-                break
-        else:
-            menu=mw.form.menubar.addMenu('&Study')
         MENU_OPTIONS=( # CONF_KEY, TITLE, CALLBACK
-            ("fg_hotkey", "ReMemorize: Forget Card(s)", self._forgetCards),
-            ("ef_hotkey", "ReMemorize: Change Card Factor", self.changeEF),
-            ("hotkey", "ReMemorize: Reschedule", self.ask)
+            ("fg_hotkey", "Forget Card(s)", self._forgetCards),
+            ("ef_hotkey", "Change Card Factor", self.changeEF),
+            ("hotkey", "Reschedule", self.ask)
         )
+        menu_name = self.conf.get("menu_name","&Study")
+        menu = toolbar.getMenu(mw, menu_name)
+        submenu = toolbar.getSubMenu(menu, "ReMemorize")
         for k,t,cb in MENU_OPTIONS:
             hk=self.conf.get(k,None) or QKeySequence()
             act=QAction(t,mw)
             act.setShortcut(QKeySequence(hk))
             act.triggered.connect(cb)
-            menu.addAction(act)
+            submenu.addAction(act)
             self.menuItem[k]=act
 
 

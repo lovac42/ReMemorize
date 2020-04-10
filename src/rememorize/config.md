@@ -5,7 +5,7 @@
 
 # ReMemorize: Rescheduler with sibling and logging
 
-NOTE: Changing config settings do not require a restart unless restart was specified in the notes.
+NOTE: Changing config settings do not require a restart unless it was specified in the notes.
 
 ### hotkey:
 Shortcut for rememorize.  
@@ -18,6 +18,10 @@ Shortcut for changing ease factor.
 ### fg_hotkey:
 Shortcut for forget note.  
 (Beware of hotkey conflicts.)
+
+### menu_name:
+Default to the Study menu on the toolbar, but you can change this to any other name.  
+Requires a restart of anki to see results.
 
 ### default_days_on_ask
 Default days to set when the user presses the hotkey.
