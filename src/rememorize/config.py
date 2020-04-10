@@ -2,7 +2,7 @@
 # Copyright: (C) 2018-2020 Lovac42
 # Support: https://github.com/lovac42/AddonManager21
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
-# Version: 0.0.6
+# Version: 0.1.0
 
 
 from aqt import mw
@@ -21,7 +21,7 @@ class Config():
 
     def __init__(self, addonName):
         self.addonName=addonName
-        addHook('profileLoaded', self._onProfileLoaded)
+        addHook('profileLoaded', self._loadConfig)
 
     def set(self, key, value):
         self.config[key]=value
@@ -31,15 +31,6 @@ class Config():
 
     def has(self, key):
         return self.config.get(key)!=None
-
-
-    def _onProfileLoaded(self):
-        if ANKI21: # or ccbc
-            self._loadConfig()
-        else:
-            # wait for addonManager21 to load first.
-            # Timer is no longer necessary for newer versions of AddonManager21
-            mw.progress.timer(300,self._loadConfig,False)
 
     def _loadConfig(self):
         if getattr(mw.addonManager, "getConfig", None):
@@ -69,6 +60,14 @@ class Config():
             if jsn:
                 return json.loads(data)
             return data
+
+    def save(self):
+        moduleDir, _ = os.path.split(__file__)
+        path = os.path.join(moduleDir,'meta.json')
+        meta=self.readFile('meta.json') or {}
+        meta['config']=self.config
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(meta))
 
 
 #From: https://stackoverflow.com/questions/3232943/
