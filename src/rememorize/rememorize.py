@@ -25,8 +25,8 @@ class ReMemorize:
         addHook(ADDON_NAME+".configLoaded", self.onConfigLoaded)
         addHook(ADDON_NAME+".configUpdated", self.onConfigUpdated)
 
-        #Allows other GUIs to tap into
-        # e.g. runHook("ReMemorize.reschedule", card, 100)
+        # Allows other GUIs to tap into
+        #   e.g. runHook("ReMemorize.reschedule", card, 100)
         addHook('ReMemorize.forget', self.forgetCards) #w/ siblings & conf settings
         addHook('ReMemorize.forgetAll', self.forgetSelected) #util wrapper, no siblings
         addHook('ReMemorize.reschedule', self.reschedCards) #w/ siblings & conf settings

@@ -4,14 +4,14 @@
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 
+import random
+import time, datetime
+import aqt.utils
 from aqt import mw
 from aqt.qt import *
 from aqt.utils import tooltip, showInfo
 from anki.utils import intTime, ids2str
-import random, time, datetime
-import aqt.utils
 from anki.lang import _
-from .const import *
 
 
 #From: anki.sched.Scheduler
@@ -38,22 +38,15 @@ def customReschedCards(ids, imin, imax, logging=True, lbal=False):
             initNewCard(card)
         r=adjInterval(card,imin,imax,lbal)
         ivl = max(1, r)
-        # d.append(dict(id=id, due=r+t, ivl=ivl, mod=mod, usn=mw.col.usn(), fact=card.factor))
 
                 # IVL, DUE,    USN,       MOD,  FACTOR,    CID
         d.append((ivl, r+t, mw.col.usn(), mod, card.factor, id))
-
         if logging: trylog(card,ivl)
 
     mw.col.sched.remFromDyn(ids)
-    # mw.col.db.executemany("""
-# update cards set type=2,queue=2,left=0,ivl=:ivl,due=:due,odue=0,
-# usn=:usn,mod=:mod,factor=:fact where id=:id""", d)
-
     mw.col.db.executemany("""
 update cards set type=2,queue=2,left=0,ivl=?,due=?,odue=0,
 usn=?,mod=?,factor=? where id=?""", d)
-
     mw.col.log(ids)
     mw.reviewer.card=revCard
 

@@ -5,15 +5,17 @@
 
 
 import sys, aqt, random
+import anki.sched
 from aqt import mw
 from anki.hooks import wrap
 from aqt.utils import getText
 from anki.utils import ids2str
+from anki.lang import _
+
 from .rememorize import *
 from .utils import *
-from .const import *
-import anki.sched
-from anki.lang import _
+from .const import BROWSER_TAG
+from .lib.com.lovac42.anki.version import ANKI21, CCBC
 
 
 remem=ReMemorize()

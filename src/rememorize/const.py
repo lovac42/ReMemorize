@@ -4,10 +4,7 @@
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 
-from anki import version
-CCBC = version.endswith("ccbc")
-ANKI21 = version.startswith("2.1.") and not CCBC
-
+from .lib.com.lovac42.anki.version import ANKI21
 
 ADDON_NAME = "rememorize"
 
