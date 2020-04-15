@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-# Copyright: (C) 2018-2019 Lovac42
+# Copyright 2018-2020 Lovac42
+# Copyright 2006-2019 Ankitects Pty Ltd and contributors
 # Support: https://github.com/lovac42/ReMemorize
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
-# Version: 0.0.2
+# Version: 0.0.3
 
-# ABOUT: Adds rate:1:0 search to browser allowing searching for rescheduled cards.
+# ABOUT: Adds rated:1:0 search to browser allowing searching for rescheduled cards.
 # Please note the license is agpl for this extension
 
 
