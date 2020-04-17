@@ -5,8 +5,12 @@
 
 
 from .lib.com.lovac42.anki.version import ANKI21
+BROWSER_TAG = "_reschedule" if ANKI21 else "reschedule"
+
+import os
+ADDON_PATH = os.path.dirname(__file__)
 
 ADDON_NAME = "rememorize"
 
-BROWSER_TAG = "_reschedule" if ANKI21 else "reschedule"
+TARGET_STABLE_VERSION = 23
 
