@@ -7,7 +7,7 @@
 import sys, aqt, random
 import anki.sched
 from aqt import mw
-from anki.hooks import wrap
+from anki.hooks import wrap, runHook
 from aqt.utils import getText
 from anki.utils import ids2str
 from anki.lang import _
