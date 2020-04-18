@@ -10,7 +10,8 @@ BROWSER_TAG = "_reschedule" if ANKI21 else "reschedule"
 import os
 ADDON_PATH = os.path.dirname(__file__)
 
-ADDON_NAME = "rememorize"
+ADDONNAME = "rememorize" #old reference, maybe used by other addons.
+ADDON_NAME = "ReMemorize" #Used by safety first module
 
 TARGET_STABLE_VERSION = 23
 

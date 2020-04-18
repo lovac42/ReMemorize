@@ -10,7 +10,7 @@ from aqt.qt import *
 from anki.hooks import addHook
 from aqt.utils import getText, showInfo
 from anki.lang import _
-from .const import ADDON_NAME
+from .const import ADDONNAME
 from .config import Config
 from .utils import *
 
@@ -21,9 +21,9 @@ class ReMemorize:
     menuItem={}
 
     def __init__(self):
-        self.conf=Config(ADDON_NAME)
-        addHook(ADDON_NAME+".configLoaded", self.onConfigLoaded)
-        addHook(ADDON_NAME+".configUpdated", self.onConfigUpdated)
+        self.conf=Config(ADDONNAME)
+        addHook(ADDONNAME+".configLoaded", self.onConfigLoaded)
+        addHook(ADDONNAME+".configUpdated", self.onConfigUpdated)
 
         # Allows other GUIs to tap into
         #   e.g. runHook("ReMemorize.reschedule", card, 100)
