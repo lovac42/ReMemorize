@@ -29,14 +29,18 @@ def customReschedCards(ids, imin, imax, logging=True, lbal=False):
     mod = intTime()
     for id in ids:
         card=mw.col.getCard(id)
+
+        # Swap to trigger other addons (defuzz, FreeWeekEnd, agent_orange, etc)
+        # Also for rescheduling previous card (p prefix)
+        mw.reviewer.card=card
+
         if markForUndo: #if size of array is one
             mw.col.markReview(card)
-        else: #if not in reviewer
-            mw.reviewer.card=card #swap for config checking (e.g. deFuzz/FreeWeekEnd deck options)
 
         if card.type in (0,1):
             initNewCard(card)
-        r=adjInterval(card,imin,imax,lbal)
+
+        r = adjInterval(card,imin,imax,lbal)
         ivl = max(1, r)
 
                 # IVL, DUE,    USN,       MOD,  FACTOR,    CID
