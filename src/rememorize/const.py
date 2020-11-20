@@ -13,5 +13,5 @@ ADDON_PATH = os.path.dirname(__file__)
 ADDONNAME = "rememorize" #old reference, maybe used by other addons.
 ADDON_NAME = "ReMemorize" #Used by safety first module
 
-TARGET_STABLE_VERSION = 23
+TARGET_STABLE_VERSION = 35
 
