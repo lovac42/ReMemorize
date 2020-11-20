@@ -18,41 +18,45 @@ from anki.lang import _
 #Mods: removed resetting ease factor, added logs
 # if lbal is true, only imin is used.
 def customReschedCards(ids, imin, imax, logging=True, lbal=False):
-    revCard=mw.reviewer.card
     markForUndo=True
-    if mw.state!='review' or len(ids)>1 or not logging:
-        markForUndo=False
-        mw.checkpoint(_("ReM Rescheduled")) #undo state, inc siblings
+    revCard=mw.reviewer.card
 
-    d = []
-    t = mw.col.sched.today
-    mod = intTime()
-    for id in ids:
-        card=mw.col.getCard(id)
+    try:
+        if mw.state!='review' or len(ids)>1 or not logging:
+            markForUndo=False
+            mw.checkpoint(_("ReM Rescheduled")) #undo state, inc siblings
 
-        # Swap to trigger other addons (defuzz, FreeWeekEnd, agent_orange, etc)
-        # Also for rescheduling previous card (p prefix)
-        mw.reviewer.card=card
+        d = []
+        t = mw.col.sched.today
+        mod = intTime()
+        for id in ids:
+            card=mw.col.getCard(id)
 
-        if markForUndo: #if size of array is one
-            mw.col.markReview(card)
+            # Swap to trigger other addons (defuzz, FreeWeekEnd, agent_orange, etc)
+            # Also for rescheduling previous card (p prefix)
+            mw.reviewer.card=card
 
-        if card.type in (0,1):
-            initNewCard(card)
+            if markForUndo: #if size of array is one
+                mw.col.markReview(card)
 
-        r = adjInterval(card,imin,imax,lbal)
-        ivl = max(1, r)
+            if card.type in (0,1):
+                initNewCard(card)
 
-                # IVL, DUE,    USN,       MOD,  FACTOR,    CID
-        d.append((ivl, r+t, mw.col.usn(), mod, card.factor, id))
-        if logging: trylog(card,ivl)
+            r = adjInterval(card,imin,imax,lbal)
+            ivl = max(1, r)
 
-    mw.col.sched.remFromDyn(ids)
-    mw.col.db.executemany("""
+                    # IVL, DUE,    USN,       MOD,  FACTOR,    CID
+            d.append((ivl, r+t, mw.col.usn(), mod, card.factor, id))
+            if logging: trylog(card,ivl)
+
+        mw.col.sched.remFromDyn(ids)
+        mw.col.db.executemany("""
 update cards set type=2,queue=2,left=0,ivl=?,due=?,odue=0,
 usn=?,mod=?,factor=? where id=?""", d)
-    mw.col.log(ids)
-    mw.reviewer.card=revCard
+        mw.col.log(ids)
+
+    finally:
+        mw.reviewer.card=revCard
 
 
 
